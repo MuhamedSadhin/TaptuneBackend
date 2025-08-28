@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import User from "../models/userSchema.js";
-import Profile from "../models/ProfileSchema.js";
+import Profile from "../models/profileSchema.js";
 import Connect from "../models/connectSchema.js";
 
 export const getAllUsers = async (req, res) => {
