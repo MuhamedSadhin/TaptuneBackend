@@ -4,7 +4,7 @@ dotenv.config();
 import cors from "cors";
 import morgan from "morgan";
 import connectDB from "./config.js/db.js";
-import convertlogic from "./DBLogic/convertLogic.js";
+// import convertlogic from "./DBLogic/convertLogic.js";
 import authRoutes from "./routes/authRoute.js";
 import cardRoutes from "./routes/cardRoute.js";
 import profileRoutes from "./routes/profileRoute.js";
@@ -30,7 +30,7 @@ app.use(
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cookieParser());
-app.use("/api/convert",convertlogic);
+// app.use("/api/convert",convertlogic);
 app.use("/api/auth", authRoutes);
 app.use("/api/card", cardRoutes);
 app.use("/api/profile", profileRoutes);
