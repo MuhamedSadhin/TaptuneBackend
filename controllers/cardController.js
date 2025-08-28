@@ -105,6 +105,7 @@ export const orderCardAndCreateProfile = async (req, res) => {
       email,
       quantity,
       logoImage,
+      status: "Pending",
     });
 
     const savedOrder = await cardOrder.save();
@@ -122,6 +123,7 @@ export const orderCardAndCreateProfile = async (req, res) => {
       email,
       phoneNumber: phone,
       designation,
+      isActive:false
     });
 
     const savedProfile = await profile.save();

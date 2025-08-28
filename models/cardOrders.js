@@ -28,7 +28,7 @@ const cardOrderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: "pending",
+      default: "Pending",
     },
   },
   { timestamps: true }
