@@ -1,0 +1,62 @@
+[
+  {
+    "id": "d4786e0e-215b-412d-a44a-e9637b1c464b",
+    "name": "Gold card",
+    "price": "1200",
+    "date": {
+      "_seconds": 1732953230,
+      "_nanoseconds": 235000000
+    },
+    "category": "Premium",
+    "frontDesign": "https://firebasestorage.googleapis.com/v0/b/taptune-b3b03.appspot.com/o/image%2Fd4786e0e-215b-412d-a44a-e9637b1c464bExecutive-1.jpg?alt=media&token=8ccbcc99-e743-47ee-8ee1-0f3107bec9a1",
+    "backDesign": "https://firebasestorage.googleapis.com/v0/b/taptune-b3b03.appspot.com/o/image%2Fd4786e0e-215b-412d-a44a-e9637b1c464bExecutive-2.jpg?alt=media&token=fd4a8c8e-322d-44e6-bf00-5aa6ad3dcb6a",
+    "isQrcode": true,
+    "isLogo": true,
+    "isActivate": true
+  },
+  {
+    "id": "544ea5f3-b234-42f3-8b73-a29e8553391a",
+    "name": "Standard",
+    "price": "999",
+    "date": {
+      "_seconds": 1732953296,
+      "_nanoseconds": 181000000
+    },
+    "category": "Standard",
+    "frontDesign": "https://firebasestorage.googleapis.com/v0/b/taptune-b3b03.appspot.com/o/image%2F544ea5f3-b234-42f3-8b73-a29e8553391astandard-1.jpg?alt=media&token=9940106e-f49a-4247-8f1e-71adb9d84f9e",
+    "backDesign": "https://firebasestorage.googleapis.com/v0/b/taptune-b3b03.appspot.com/o/image%2F544ea5f3-b234-42f3-8b73-a29e8553391astandard-2.jpg?alt=media&token=e9215ceb-6119-421e-8aa5-c67d5c936e5f",
+    "isQrcode": true,
+    "isLogo": false,
+    "isActivate": true
+  },
+  {
+    "id": "259f8713-8b51-4513-b38a-387cce3a7a59",
+    "name": "Classic",
+    "date": {
+      "_seconds": 1732953450,
+      "_nanoseconds": 314000000
+    },
+    "category": "Classic",
+    "frontDesign": "https://firebasestorage.googleapis.com/v0/b/taptune-b3b03.appspot.com/o/image%2F259f8713-8b51-4513-b38a-387cce3a7a59clasic-1.jpg?alt=media&token=b8876ada-bc92-4914-9632-176394715485",
+    "backDesign": "https://firebasestorage.googleapis.com/v0/b/taptune-b3b03.appspot.com/o/image%2F259f8713-8b51-4513-b38a-387cce3a7a59clasic-2.jpg?alt=media&token=0dcc4378-c03f-429d-8b47-f5fa1b83b72a",
+    "isQrcode": true,
+    "isLogo": false,
+    "isActivate": true,
+    "price": "999"
+  },
+  {
+    "id": "96bcd70a-f405-41d3-a851-33b3ade120b6",
+    "name": "Basic card",
+    "price": "999",
+    "date": {
+      "_seconds": 1732952815,
+      "_nanoseconds": 807000000
+    },
+    "category": "Basic",
+    "frontDesign": "https://firebasestorage.googleapis.com/v0/b/taptune-b3b03.appspot.com/o/image%2F96bcd70a-f405-41d3-a851-33b3ade120b6basic-1.jpg?alt=media&token=072154d2-6a5d-493e-81c5-cb1cea46834c",
+    "backDesign": "https://firebasestorage.googleapis.com/v0/b/taptune-b3b03.appspot.com/o/image%2F96bcd70a-f405-41d3-a851-33b3ade120b6basic-2.jpg?alt=media&token=6a9804da-2b20-4049-811e-7e4e72a5ff5a",
+    "isQrcode": true,
+    "isLogo": false,
+    "isActivate": true
+  }
+]
