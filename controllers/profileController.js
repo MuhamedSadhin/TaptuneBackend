@@ -1,5 +1,5 @@
 import CardOrder from "../models/cardOrders.js";
-import Profile from "../models/ProfileSchema.js";
+import Profile from "../models/profileSchema.js";
 
 export const viewAllProfileOfAUser = async (req, res) => {
     try {

@@ -1,6 +1,6 @@
 import CardOrder from "../models/cardOrders.js";
 import Enquiry from "../models/ContactSchema.js";
-import Profile from "../models/ProfileSchema.js";
+import Profile from "../models/profileSchema.js";
 import User from "../models/userSchema.js";
 
 
