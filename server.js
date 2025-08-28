@@ -1,10 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
-dotenv.config(); 
+dotenv.config();
 import cors from "cors";
 import morgan from "morgan";
-import connectDB from "./config.js/db.js";
-// import convertlogic from "./DBLogic/convertLogic.js";
 import authRoutes from "./routes/authRoute.js";
 import cardRoutes from "./routes/cardRoute.js";
 import profileRoutes from "./routes/profileRoute.js";
@@ -14,25 +12,45 @@ import orderRoutes from './routes/orderRoutes.js'
 import userRoutes from './routes/userRoute.js';
 import enquiryRoutes from "./routes/enquiryRoute.js";
 import wabtuneRoutes from "./routes/wabtuneRoute.js";
+import connectDB from "./config/db.js";
 
 const app = express();
 connectDB();
+app.use(cookieParser());
 
+const corsOptions = {
+  origin: true, 
+  credentials: true, 
+};
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL?.trim().replace(/\/$/, ""),
+  process.env.FRONTND_URL2?.trim().replace(/\/$/, ""),
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "http://localhost:5175",
-      "https://taptune-frontend.vercel.app",
-    ],
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
-app.use(express.json());
+
+
+
 app.use(morgan("dev"));
-app.use(cookieParser());
-// app.use("/api/convert",convertlogic);
 app.use("/api/auth", authRoutes);
 app.use("/api/card", cardRoutes);
 app.use("/api/profile", profileRoutes);
@@ -49,4 +67,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running  on http://localhost:${PORT}`);
 });
+
+
 
