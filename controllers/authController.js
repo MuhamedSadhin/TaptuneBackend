@@ -4,10 +4,12 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import { sendWhatsAppTemplateMessage } from "../utils/sendWabtuneMessage.js";
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
 
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export const loginUser = async (req, res) => {
   try {
