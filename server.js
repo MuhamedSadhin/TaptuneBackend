@@ -29,6 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 const allowedOrigins = [
   process.env.FRONTEND_URL?.trim().replace(/\/$/, ""),
   process.env.FRONTND_URL2?.trim().replace(/\/$/, ""),
+  "https://taptune-frontend.vercel.app",
   "http://localhost:5173",
   "http://localhost:3000",
 ];
