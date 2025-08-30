@@ -31,3 +31,37 @@ export const getEnquiries = async (req, res) => {
        });
      }
 }
+
+
+export const createEnquiry = async (req, res) => {
+    try {
+      const { name, phoneNumber, email, message } = req.body;
+      if (!name && !phoneNumber) {
+        return res.status(400).json({
+          success: false,
+          message: "Name and Phone number is required",
+        });
+      }
+
+      const enquiry = new Enquiry({
+        name,
+        phoneNumber,
+        email,
+        message,
+      });
+
+      await enquiry.save();
+
+      res.status(201).json({
+        success: true,
+        message: "Enquiry created successfully",
+        data: enquiry,
+      });
+    } catch (error) {
+      console.error("Error creating enquiry:", error);
+      res.status(500).json({
+        success: false,
+        message: "Server error, please try again later",
+      });
+    }
+}
