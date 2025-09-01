@@ -373,6 +373,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
 export const googleAuth = async (req, res) => {
+  console.log("frontend url", process.env.FRONTND_URL2);
   try {
     const { credential } = req.body;
     console.log("Google Auth Request:", req.body);
@@ -390,7 +391,7 @@ export const googleAuth = async (req, res) => {
         code: credential,
         client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: process.env.FRONTND_URL,
+        redirect_uri: process.env.FRONTND_URL2,
         grant_type: "authorization_code",
       }).toString(),
       {
@@ -420,26 +421,7 @@ export const googleAuth = async (req, res) => {
     const profile = userInfoRes.data;
     console.log("Google Profile:", profile);
 
-    // Step 3: Fetch phone number using People API
-    let phoneNumber = "";
-    try {
-      const peopleRes = await fetch(
-        "https://people.googleapis.com/v1/people/me?personFields=phoneNumbers",
-        {
-          headers: { Authorization: `Bearer ${tokenData.access_token}` },
-        }
-      );
-      const peopleData = peopleRes.data;
-      console.log("Google People API:", peopleData);
-
-      if (peopleData.phoneNumbers && peopleData.phoneNumbers.length > 0) {
-        phoneNumber = peopleData.phoneNumbers[0].value;
-      }
-    } catch (err) {
-      console.error("Failed to fetch phone number:", err);
-    }
-
-    // Step 4: Find or create user in DB
+    // Step 3: Find or create user in DB (no phone number anymore)
     let user = await User.findOne({ email: profile.email });
     if (!user) {
       user = await User.create({
@@ -447,27 +429,20 @@ export const googleAuth = async (req, res) => {
         name: profile.name,
         email: profile.email,
         profilePic: profile.picture,
-        phoneNumber: phoneNumber || "",
         isOrdered: false,
         role: "user",
         isActive: true,
       });
-    } else {
-      // Update phone if missing
-      if (!user.phoneNumber && phoneNumber) {
-        user.phoneNumber = phoneNumber;
-        await user.save();
-      }
     }
 
-    // Step 5: Generate JWT
+    // Step 4: Generate JWT
     const ourToken = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // Step 6: Set cookie
+    // Step 5: Set cookie
     res.cookie("token", ourToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -482,7 +457,6 @@ export const googleAuth = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        phoneNumber: user.phoneNumber,
         role: user.role,
         profilePic: user.profilePic,
         isActive: user.isActive,
