@@ -95,7 +95,7 @@ export const getOrderStats = async (req, res) => {
 
     const totalOrders = await CardOrder.countDocuments();
     const activeProfiles = await Profile.countDocuments({ isActive: true });
-    const pendingOrders = await CardOrder.countDocuments({ status: "pending" });
+    const pendingOrders = await CardOrder.countDocuments({ status: "Pending" });
     const ordersThisMonth = await CardOrder.countDocuments({
       createdAt: { $gte: startOfThisMonth },
     });

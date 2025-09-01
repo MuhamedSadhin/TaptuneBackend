@@ -11,3 +11,5 @@ router.post("/createAdmin", createAdmin);
 router.post("/updateAdmin", updateAdmin); 
 router.get("/homePageData",protect, getUserHomepage);
 export default router;
+
+
