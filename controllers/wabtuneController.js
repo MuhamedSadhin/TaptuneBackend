@@ -19,7 +19,6 @@ export const sendMessage = async (req, res) => {
 
   const indianNumber = phoneNumber;
 
-  console.log("phoneNumber and name:", indianNumber, name);
 
   const getSubscriberUrl = `${baseUrl}subscriber/get`;
   const createSubscriberUrl = `${baseUrl}subscriber/create`;

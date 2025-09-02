@@ -79,7 +79,6 @@ export const viewProfileByTap = async (req, res) => {
 
 
 export const editProfile = async (req, res) => {
-  console.log("Edit Profile Request:", req.body);
   try {
     const { userId } = req.params;
 
@@ -144,7 +143,6 @@ export const updateStatusOfProfile = async (req, res) => {
    try {
      const { id, isActive } = req.body;
 
-     console.log(req.body);
 
      if (!id || typeof isActive !== "boolean") {
        return res.status(400).json({

@@ -184,7 +184,6 @@ export const updateUserSettings = async (req, res) => {
   try {
     const userId = req.user._id;
     const { fullName, phoneNumber, oldPassword, newPassword } = req.body;
-    console.log("Update Profile Request Body:", req.body);
 
     const user = await User.findById(userId);
 
@@ -202,7 +201,6 @@ export const updateUserSettings = async (req, res) => {
       if (!user.password || user.password == "") {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(newPassword, salt);
-        console.log("New password set for Google user", newPassword);
       } else {
         if (!oldPassword) {
           return res.status(400).json({
@@ -269,114 +267,10 @@ export const logoutUser = (req, res) => {
 };
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// export const googleAuth = async (req, res) => {
-//   try {
-//     const { credential } = req.body;
-//     console.log("Google Auth Request:", req.body);
-
-//     if (!credential) {
-//       return res
-//         .status(400)
-//         .json({ success: false, message: "Google credential is required" });
-//     }
-
-//     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-//       body: new URLSearchParams({
-//         code: credential,
-//         client_id: process.env.GOOGLE_CLIENT_ID,
-//         client_secret: process.env.GOOGLE_CLIENT_SECRET,
-//         redirect_uri: "http://localhost:5173",
-//         grant_type: "authorization_code",
-//       }),
-//     });
-
-//     const tokenData = await tokenRes.json();
-//     console.log("Google Token Response:", tokenData);
-
-//     if (tokenData.error) {
-//       return res
-//         .status(400)
-//         .json({
-//           success: false,
-//           message: "Token exchange failed",
-//           error: tokenData,
-//         });
-//     }
-
-//     // Fetch user info with access token
-//     const userInfoRes = await fetch(
-//       "https://www.googleapis.com/oauth2/v3/userinfo",
-//       {
-//         headers: { Authorization: `Bearer ${tokenData.access_token}` },
-//       }
-//     );
-
-//     const profile = await userInfoRes.json();
-//     console.log("Google Profile:", profile);
-
-//     // Find or create user
-//     let user = await User.findOne({ email: profile.email });
-//     if (!user) {
-//       user = await User.create({
-//         googleId: profile.sub,
-//         name: profile.name,
-//         email: profile.email,
-//         profilePic: profile.picture,
-//         phoneNumber: profile.phone_number || "",
-//         isOrdered: false,
-//         role: "user",
-//         isActive: true,
-//       });
-//     }
-
-//     // Generate our JWT
-//     const ourToken = jwt.sign(
-//       { id: user._id, email: user.email },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "7d" }
-//     );
-
-//     // Set cookie
-//     res.cookie("token", ourToken, {
-//       httpOnly: true,
-//       secure: process.env.NODE_ENV === "production",
-//       sameSite: "strict",
-//       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-//     });
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Google login successful",
-//       user: {
-//         id: user._id,
-//         name: user.name,
-//         email: user.email,
-//         role: user.role,
-//         profilePic: user.profilePic,
-//         isActive: user.isActive,
-//       },
-//     });
-//   } catch (err) {
-//     console.error("Google Auth Error:", err);
-//     res.status(500).json({
-//       success: false,
-//       message: "Google Auth failed",
-//       error: err.message,
-//     });
-//   }
-// };
-
-
-
-
 
 export const googleAuth = async (req, res) => {
-  console.log("frontend url", process.env.FRONTND_URL2);
   try {
     const { credential } = req.body;
-    console.log("Google Auth Request:", req.body);
 
     if (!credential) {
       return res
@@ -400,7 +294,6 @@ export const googleAuth = async (req, res) => {
     );
 
     const tokenData = tokenRes.data;
-    console.log("Google Token Response:", tokenData);
 
     if (tokenData.error) {
       return res.status(400).json({
@@ -419,7 +312,6 @@ export const googleAuth = async (req, res) => {
     );
 
     const profile = userInfoRes.data;
-    console.log("Google Profile:", profile);
 
     // Step 3: Find or create user in DB (no phone number anymore)
     let user = await User.findOne({ email: profile.email });

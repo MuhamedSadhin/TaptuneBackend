@@ -4,7 +4,6 @@ import Profile from "../models/profileSchema.js";
 import Connect from "../models/connectSchema.js";
 
 export const getAllUsers = async (req, res) => {
-  console.log("Fetching all users...");
 
   try {
     const { page = 1, limit = 10, search = "" } = req.query;
@@ -49,7 +48,6 @@ export const getAllUsers = async (req, res) => {
 export const getAllAdmins = async (req, res) => {
   try {
     const { search, role } = req.query;
-    console.log("Filters received:", { search, role });
 
     let query = { role: { $ne: "user" } };
 

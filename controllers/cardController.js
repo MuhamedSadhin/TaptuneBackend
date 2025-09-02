@@ -34,7 +34,6 @@ export const viewAllCards = async (req, res) => {
 export const viewOneCard = async(req, res) => {
     try {
         const { id } = req.params;
-        console.log("Card ID:", id);
         if (!id) {
             return res.status(400).json({
                 success: false,
@@ -66,7 +65,6 @@ export const viewOneCard = async(req, res) => {
 //   try {
 //     const { cardId, fullName, designation, phone, email, quantity, logoImage } =
 //       req.body;
-//     console.log("Order Data:", req.body);
 
 //     const userId = req.user.id;
 
@@ -294,7 +292,6 @@ export const updateCard = async (req, res) => {
 
 export const createCard = async (req, res) => {
   try {
-    console.log("Card Data:", req.body);
     const {
       cardName,
       price,
