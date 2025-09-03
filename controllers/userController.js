@@ -174,23 +174,38 @@ export const getUserHomepage = async (req, res) => {
   try {
     const userId = req.user._id;
 
+    // Parallel queries
     const totalProfilesPromise = Profile.countDocuments({ userId });
     const totalConnectionsPromise = Connect.countDocuments({ userId });
-    const lastProfilesPromise = Profile.find({ userId })
-      .limit(3);
-
-    // Last 4 connections
+    const lastProfilesPromise = Profile.find({ userId }).limit(3);
     const lastConnectionsPromise = Connect.find({ userId })
       .sort({ createdAt: -1 })
       .limit(4);
-    
-    const [totalProfiles, totalConnections, lastProfiles, lastConnections] =
-      await Promise.all([
-        totalProfilesPromise,
-        totalConnectionsPromise,
-        lastProfilesPromise,
-        lastConnectionsPromise,
-      ]);
+
+    // 👇 Aggregate total profile views for this user
+    const totalProfileViewsPromise = Profile.aggregate([
+      { $match: { userId } },
+      { $group: { _id: null, totalViews: { $sum: "$profileViews" } } },
+    ]);
+
+    const [
+      totalProfiles,
+      totalConnections,
+      lastProfiles,
+      lastConnections,
+      totalProfileViewsResult,
+    ] = await Promise.all([
+      totalProfilesPromise,
+      totalConnectionsPromise,
+      lastProfilesPromise,
+      lastConnectionsPromise,
+      totalProfileViewsPromise,
+    ]);
+
+    const totalProfileViews =
+      totalProfileViewsResult.length > 0
+        ? totalProfileViewsResult[0].totalViews
+        : 0;
 
     return res.status(200).json({
       success: true,
@@ -198,6 +213,7 @@ export const getUserHomepage = async (req, res) => {
       data: {
         totalProfiles,
         totalConnections,
+        totalProfileViews, // ✅ Added total views
         lastProfiles,
         lastConnections,
       },

@@ -3,17 +3,16 @@ import Profile from "../models/profileSchema.js";
 
 export const viewAllProfileOfAUser = async (req, res) => {
     try {
-        const userId = req.user?._id; // assumes you have auth middleware setting req.user
+        const userId = req.user?._id; 
 
         if (!userId) {
           res.status(401);
           throw new Error("Unauthorized: No user logged in");
         }
 
-        // Find the profile for the logged-in user
         const profile = await Profile.find({ userId })
           .populate({
-            path: "cardOrderId", // get the corresponding card order details
+            path: "cardOrderId", 
             model: CardOrder,
           })
         .lean();
@@ -45,7 +44,7 @@ export const viewProfileByTap = async (req, res) => {
         select: "name email role", 
       })
       .lean();
-
+    console.log("profile view ", profile);
     if (!profile) {
       return res.status(404).json({
         success: false,
@@ -180,4 +179,55 @@ export const updateStatusOfProfile = async (req, res) => {
      });
    }
 }
+
+
+
+
+export const incrementProfileViews = async (req, res) => {
+  try {
+    const { id } = req.query;
+    console.log("user :", req.user);
+
+    const profile = await Profile.findById(id);
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found",
+      });
+    }
+
+    // 🚫 Skip if owner
+    if (req.user && profile.userId.toString() === req.user._id.toString()) {
+      return res.status(200).json({
+        success: true,
+        message: "Own profile view ignored",
+      });
+    }
+
+    // 🚫 Skip if admin (safe check with optional chaining)
+    if (req.user?.role?.toLowerCase() === "admin") {
+      return res.status(200).json({
+        success: true,
+        message: "Admin view ignored",
+      });
+    }
+
+    // ✅ Increment view
+    profile.profileViews += 1;
+    await profile.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile view incremented successfully",
+      profile,
+    });
+  } catch (error) {
+    console.error("Error incrementing profile views:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while incrementing profile views",
+    });
+  }
+};
+
 

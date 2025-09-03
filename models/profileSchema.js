@@ -15,6 +15,7 @@ const profileSchema = new mongoose.Schema(
       trim: true,
       unique: true,
     },
+    profileViews: { type: Number, default: 0 },
     fullName: { type: String, trim: true, required: true },
     userName: { type: String, trim: true, default: "" },
     email: { type: String, trim: true },

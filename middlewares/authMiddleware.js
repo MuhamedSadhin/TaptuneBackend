@@ -5,7 +5,6 @@ const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
 
 export const protect = async (req, res, next) => {
   try {
-    // Read token from HTTP-only cookie
     const token = req.cookies.token;
 
     if (!token) {
@@ -15,10 +14,8 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Fetch user from DB
     const user = await User.findById(decoded.id).select("-password");
 
     if (!user) {
@@ -28,7 +25,6 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    // Attach user to request
     req.user = user;
     next();
   } catch (error) {
