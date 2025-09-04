@@ -12,6 +12,7 @@ import orderRoutes from './routes/orderRoutes.js'
 import userRoutes from './routes/userRoute.js';
 import enquiryRoutes from "./routes/enquiryRoute.js";
 import wabtuneRoutes from "./routes/wabtuneRoute.js";
+import notificationRoutes from "./routes/notificationRoute.js"
 import connectDB from "./config/db.js";
 
 const app = express();
@@ -59,7 +60,8 @@ app.use("/api/connection", connectionRoutes);
 app.use("/api/order", orderRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/enquiry", enquiryRoutes);
-app.use("/api/wabtune",wabtuneRoutes)
+app.use("/api/wabtune", wabtuneRoutes)
+app.use("/api/notification", notificationRoutes);
 app.use("/", (req, res) => {
   res.send("API not matching!");
 })

@@ -5,6 +5,7 @@ import { OAuth2Client } from "google-auth-library";
 import { sendWhatsAppTemplateMessage } from "../utils/sendWabtuneMessage.js";
 import axios from "axios";
 import dotenv from "dotenv";
+import notificationSchema from "../models/notificationSchema.js";
 dotenv.config();
 
 
@@ -111,6 +112,13 @@ export const signUp = async (req, res) => {
     });
 
     await newUser.save();
+
+    await notificationSchema.create({
+      title: "New Member Joined!",
+      name: newUser.name,
+      email:newUser.email,
+      content: `${newUser.name}  -  (${newUser.email}) has created an account.`,
+    });
 
     let whatsappResponse = null;
     
