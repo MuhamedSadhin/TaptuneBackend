@@ -30,15 +30,14 @@ export const loginUser = async (req, res) => {
         message: "Invalid email or password.",
       });
     }
-    
-        if (!user.password || user.password == "") {
-          return res.status(401).json({
-            success: false,
-            message:
-              "This account was created with Google. Please log in with Google or set a password.",
-          });
+
+    if (!user.password || user.password == "") {
+      return res.status(401).json({
+        success: false,
+        message:
+          "This account was created with Google. Please log in with Google or set a password.",
+      });
     }
-    
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -59,12 +58,14 @@ export const loginUser = async (req, res) => {
     //   maxAge: 7 * 24 * 60 * 60 * 1000,
     // });
 
+    const isProduction = process.env.NODE_ENV === "production";
 
     res.cookie("token", token, {
-      httpOnly: true,
-      secure: true, 
-      sameSite: "None", 
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true, 
+      secure: isProduction, 
+      sameSite: isProduction ? "None" : "lax", 
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
+      path: "/", 
     });
 
     res.status(200).json({
