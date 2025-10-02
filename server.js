@@ -14,6 +14,7 @@ import enquiryRoutes from "./routes/enquiryRoute.js";
 import wabtuneRoutes from "./routes/wabtuneRoute.js";
 import notificationRoutes from "./routes/notificationRoute.js"
 import connectDB from "./config/db.js";
+import convertLogicRoutes from "./DBLogic/convertLogic.js";
 
 const app = express();
 connectDB();
@@ -53,6 +54,7 @@ app.use(
 
 
 app.use(morgan("dev"));
+app.use("/api/convertlogic",convertLogicRoutes)
 app.use("/api/auth", authRoutes);
 app.use("/api/card", cardRoutes);
 app.use("/api/profile", profileRoutes);

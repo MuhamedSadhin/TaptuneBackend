@@ -11,7 +11,7 @@ const connectSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Profile",
     },
-    name: {
+    fullName: {
       type: String,
       trim: true,
     },
@@ -28,9 +28,40 @@ const connectSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    businessName: {
+      type: String,
+      trim: true,
+    },
+    businessPhone: {
+      type: String,
+      trim: true,
+    },
+    website: {
+      type: String,
+      trim: true,
+      lowercase: true,
+    },
+    businessCategory: {
+      type: String,
+      trim: true,
+    },
+    businessAddress: {
+      type: String,
+      trim: true,
+    },
+    notes: {
+      type: String,
+      trim: true,
+    },
+    leadLabel: {
+      type: String,
+      trim: true,
+      default: "New",
+    }
   },
   { timestamps: true }
 );
 
 const Connect = mongoose.model("Connect", connectSchema);
+
 export default Connect;

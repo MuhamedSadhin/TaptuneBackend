@@ -77,6 +77,7 @@ export const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         isActive: user.isActive,
+        accountType: user.accountType,
       },
     });
   } catch (error) {
@@ -90,7 +91,8 @@ export const loginUser = async (req, res) => {
 
 export const signUp = async (req, res) => {
   try {
-    const { name, email, password, phoneNumber } = req.body;
+    const { name, email, password, phoneNumber, accountType } = req.body;
+    console.log("signup", req.body);
 
 
     if (!name || !email || !password) {
@@ -118,6 +120,7 @@ export const signUp = async (req, res) => {
       role: "user",
       isOrdered: false,
       isActive: true,
+      accountType: accountType || "personal",
     });
 
     await newUser.save();
@@ -164,6 +167,7 @@ if (phoneNumber) {
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
+        accountType: newUser.accountType,
       },
       whatsapp: whatsappResponse,
     });
@@ -183,7 +187,7 @@ export const getAuthenticatedUser = async (req, res) => {
     }
 
     const user = await User.findById(req.user._id).select(
-      "_id name email role profilePic isActive phoneNumber"
+      "_id name email role profilePic isActive phoneNumber accountType"
     );
 
     if (!user) {
@@ -200,7 +204,7 @@ export const getAuthenticatedUser = async (req, res) => {
 export const updateUserSettings = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { fullName, phoneNumber, oldPassword, newPassword } = req.body;
+    const { fullName, phoneNumber, oldPassword, newPassword, accountType } = req.body;
 
     const user = await User.findById(userId);
 
@@ -213,6 +217,7 @@ export const updateUserSettings = async (req, res) => {
 
     if (fullName) user.name = fullName;
     if (phoneNumber) user.phoneNumber = phoneNumber;
+    if (accountType) user.accountType = accountType;
 
     if (newPassword) {
       if (!user.password || user.password == "") {
@@ -251,6 +256,7 @@ export const updateUserSettings = async (req, res) => {
         phoneNumber: user.phoneNumber,
         role: user.role,
         isActive: user.isActive,
+        accountType: user.accountType,
       },
     });
   } catch (error) {
@@ -341,6 +347,7 @@ export const googleAuth = async (req, res) => {
         isOrdered: false,
         role: "user",
         isActive: true,
+
       });
     }
 

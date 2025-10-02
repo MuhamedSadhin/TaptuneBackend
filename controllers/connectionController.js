@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Connect from "../models/connectSchema.js";
 import Profile from "../models/profileSchema.js";
 
@@ -5,27 +6,39 @@ import Profile from "../models/profileSchema.js";
 export const viewAllConnections = async (req, res) => {
   try {
     const userId = req.user._id;
-    const search = (req.body.search || "").trim().toLowerCase();
 
-    // 1. Find all profiles belonging to the user
-    const profiles = await Profile.find({ userId }).lean();
+    const { profileId, leadlabel, search: rawSearch } = req.body;
+    const search = (rawSearch || "").trim().toLowerCase();
+
+    const profileFilter = { userId };
+    if (profileId) {
+      profileFilter._id = profileId;
+    }
+
+    const profiles = await Profile.find(profileFilter).lean();
 
     if (!profiles || profiles.length === 0) {
       return res.status(200).json({
-        message: "No profiles found for this user",
+        message: "No profiles found matching your criteria.",
         data: [],
       });
     }
 
-    const profileIds = profiles.map((profile) => profile._id);
-
-    const connections = await Connect.find({
+    const profileIds = profiles.map((p) => p._id);
+    const connectionFilter = {
       profileId: { $in: profileIds },
-    }).lean().sort({ createdAt: -1 });
+    };
+    if (leadlabel) {
+      connectionFilter.leadLabel = leadlabel;
+    }
+
+    const connections = await Connect.find(connectionFilter)
+      .lean()
+      .sort({ createdAt: -1 });
 
     if (!connections || connections.length === 0) {
       return res.status(200).json({
-        message: "No connections found",
+        message: "No connections found matching your criteria.",
         data: [],
       });
     }
@@ -34,14 +47,20 @@ export const viewAllConnections = async (req, res) => {
       const profile = profiles.find(
         (p) => p._id.toString() === conn.profileId.toString()
       );
-
       return {
         _id: conn._id,
-        name: conn.name || "Unknown",
+        name: conn.fullName || "Unknown",
         email: conn.email || "",
         phoneNumber: conn.phoneNumber || "",
         designation: conn.designation || "",
-        connectedAt: conn.createdAt || null,
+        businessName: conn.businessName || "",
+        businessPhone: conn.businessPhone || "",
+        website: conn.website || "",
+        businessCategory: conn.businessCategory || "",
+        businessAddress: conn.businessAddress || "",
+        notes: conn.notes || "",
+        connectedAt: conn.createdAt || new Date(),
+        leadLabel: conn.leadLabel || "New",
         profileId: conn.profileId,
         viewId: profile?.viewId || "",
         profileName: profile?.fullName || "",
@@ -76,57 +95,115 @@ export const viewAllConnections = async (req, res) => {
 
 
 
+
+
 export const makeConnection = async (req, res) => {
   try {
-    const { viewId, name, email, phoneNumber, designation } = req.body;
-
-    if (!viewId || !name || !email || !phoneNumber || !designation) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    // Find the profile by viewId
-    const profile = await Profile.findOne({ viewId }).lean();
-
-    if (!profile) {
-      return res.status(404).json({ message: "Profile not found" });
-    }
-
-    // Create connection (userId comes from profile.userId)
-    await Connect.create({
-      userId: profile.userId,
-      profileId: profile._id,
-      name,
+    const {
+      viewId,
+      fullName,
       email,
       phoneNumber,
       designation,
-    });
+      businessName,
+      businessPhone,
+      website,
+      businessCategory,
+      businessAddress,
+      notes,
+    } = req.body;
 
-    // Return selected profile data to frontend
-    const {
+    // For debugging, log the actual request body
+    console.log("Request Body Received:", req.body);
+
+    if (!viewId || !fullName || !email || !phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "viewId, fullName, email, and phoneNumber are required.",
+      });
+    }
+
+    const profile = await Profile.findOne({ viewId }).lean();
+
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found. The link or QR code may be invalid.",
+      });
+    }
+
+    const newConnectionData = {
+      userId: profile.userId,
+      profileId: profile._id,
       fullName,
-      designation: profileDesignation,
-      phoneNumber: profilePhone,
-      email: profileEmail,
-      profilePic,
-      brandName,
-      socialMedia,
-    } = profile;
+      email,
+      phoneNumber,
+      designation,
+      businessName,
+      businessPhone,
+      website,
+      businessCategory,
+      businessAddress,
+      notes,
+    };
 
-    return res.status(200).json({
+    // Create the connection and get the newly created document back
+    const newConnection = await Connect.create(newConnectionData);
+
+    // Construct the new response data as requested
+    const responseData = {
+      connectionDetails: newConnection, // The data that was just saved
+      profileDetails: {
+        fullName: profile.fullName, // The full name from the connected profile
+        email: profile.email, // The email from the connected profile
+      },
+    };
+
+    return res.status(201).json({
       success: true,
       message: "Connection made successfully",
-      data: {
-        fullName,
-        designation: profileDesignation,
-        phoneNumber: profilePhone,
-        email: profileEmail,
-        profilePic,
-        brandName,
-        socialMedia,
-      },
+      data: responseData,
     });
   } catch (err) {
     console.error("Connect error:", err);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+export const updateConnectionLabel = async (req, res) => {
+  try {
+    const { connectionId } = req.query;
+    const { label } = req.body;
+
+    console.log("label", label);
+    console.log("connectionId", connectionId);
+
+    if (label === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "The 'label' field is required in the request body.",
+      });
+    }
+
+    const updatedConnection = await Connect.findByIdAndUpdate(
+      connectionId,
+      { leadLabel: label },
+      { new: true }
+    );
+
+    if (!updatedConnection) {
+      return res.status(404).json({
+        success: false,
+        message: "Connection not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Connection label updated successfully.",
+      data: updatedConnection,
+    });
+  } catch (err) {
+    console.error("Update Label Error:", err);
+    return res.status(500).json({ success: false, message: "Server error." });
   }
 };

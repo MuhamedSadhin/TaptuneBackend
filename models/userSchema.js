@@ -25,6 +25,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "user",
     },
+    accountType: {
+      type: String,
+    },
     isOrdered: {
       type: Boolean,
       default: false,
@@ -33,6 +36,7 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
   },
   { timestamps: true }
 );

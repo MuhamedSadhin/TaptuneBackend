@@ -40,7 +40,7 @@ const profileSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-profileSchema.index({ viewId: 1 });
+// profileSchema.index({ viewId: 1 });
 
 const Profile =
   mongoose.models.Profile || mongoose.model("Profile", profileSchema);
