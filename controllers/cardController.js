@@ -4,6 +4,7 @@ import Profile from "../models/profileSchema.js";
 import { v4 as uuidv4 } from "uuid";
 import User from "../models/userSchema.js";
 import { sendWhatsAppTemplateMessage } from "../utils/sendWabtuneMessage.js";
+import notificationSchema from "../models/notificationSchema.js";
 
 export const viewAllCards = async (req, res) => {
   try {
@@ -61,99 +62,6 @@ export const viewOneCard = async(req, res) => {
     }
 }
 
-// export const orderCardAndCreateProfile = async (req, res) => {
-//   try {
-//     const { cardId, fullName, designation, phone, email, quantity, logoImage } =
-//       req.body;
-
-//     const userId = req.user.id;
-
-//     if (
-//       !userId ||
-//       !cardId ||
-//       !fullName ||
-//       !quantity ||
-//       !designation ||
-//       !phone ||
-//       !email
-//     ) {
-//       return res
-//         .status(400)
-//         .json({ message: "Missing required fields.", success: false });
-//     }
-
-//     const user = await User.findById(userId);
-//     if (!user) {
-//       return res
-//         .status(404)
-//         .json({ message: "User not found", success: false });
-//     }
-
-//     if (!user.isOrdered) {
-//       user.isOrdered = true;
-//       await user.save();
-//     }
-
-//     const cardOrder = new CardOrder({
-//       userId,
-//       cardId,
-//       fullName,
-//       designation,
-//       phoneNumber: phone,
-//       email,
-//       quantity,
-//       logoImage,
-//       status: "Pending",
-//     });
-
-//     const savedOrder = await cardOrder.save();
-
-//     const uniqueViewId = `USR-${savedOrder._id
-//       .toString()
-//       .slice(-4)}-${Date.now()}`;
-
-
-//     const profile = new Profile({
-//       userId,
-//       cardOrderId: savedOrder._id,
-//       viewId: uniqueViewId,
-//       fullName,
-//       email,
-//       phoneNumber: phone,
-//       designation,
-//       isActive:false
-//     });
-
-//     const savedProfile = await profile.save();
-
-//     // ✅ Step 4: Link profile to order
-//     savedOrder.profileId = savedProfile._id;
-//     await savedOrder.save();
-//     let whatsappResponse = null;
-//     if (phone) {
-//       whatsappResponse = await sendWhatsAppTemplateMessage(
-//         "226076",
-//         "https://bot-data.s3.ap-southeast-1.wasabisys.com/upload/2025/8/flowbuilder/flowbuilder-108017-1756203446.png",
-//         phone,
-//         fullName,
-//         "169013"
-//       );
-//     }
-
-//     return res.status(201).json({
-//       message: "Card order placed and profile created successfully.",
-//       order: savedOrder,
-//       profile: savedProfile,
-//       success: true,
-//       whatsappResponse,
-//     });
-//   } catch (error) {
-//     console.error("Order error:", error);
-//     return res
-//       .status(500)
-//       .json({ message: "Internal server error.", success: false });
-//   }
-// };
 
 export const orderCardAndCreateProfile = async (req, res) => {
   try {
@@ -218,6 +126,14 @@ export const orderCardAndCreateProfile = async (req, res) => {
     await CardOrder.findByIdAndUpdate(cardOrder._id, {
       profileId: profile._id,
     });
+        await notificationSchema.create({
+          title: "New Profile Created! 👤",
+          name: fullName,
+          email: email,
+          content: `${fullName} -(${email}) has created a new profile.`,
+          type: "profile", // optional extra field for filtering later
+          relatedId: profile._id, // optional: link notification to the profile
+        });
 
     // 4️⃣ Send WhatsApp message async (non-blocking)
     if (phone) {
@@ -409,5 +325,112 @@ export const toggleCardStatusIsActive = async (req, res) => {
       message: "Internal server error",
       success: false,
     });
+  }
+};
+
+
+
+
+export const CreateProfileByAdmin = async (req, res) => {
+  try {
+    const {
+      cardId,
+      fullName,
+      email,
+      designation,
+      phoneNumber,
+      username,
+      brandName,
+      whatsappNumber,
+      bio,
+      quantity,
+    } = req.body;
+
+    const userId = req.user?.id;
+
+    // 🛑 Validate required fields
+    if (
+      !userId ||
+      !fullName ||
+      !email ||
+      !designation ||
+      !phoneNumber ||
+      !quantity
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Missing required fields.", success: false });
+    }
+
+    // 🟢 Find latest active card
+    const card = await Card.findOne({ isActive: true }).sort({ createdAt: -1 });
+    if (!card) {
+      return res.status(404).json({
+        message:
+          "No active card available. Please create an active card first.",
+        success: false,
+      });
+    }
+
+    // 🟡 Create card order
+    const cardOrder = await CardOrder.create({
+      userId,
+      cardId: card._id,
+      fullName,
+      designation,
+      phoneNumber,
+      email,
+      quantity,
+      status: "Pending",
+    });
+
+    // Generate unique view ID
+    const uniqueViewId = `USR-${cardOrder._id
+      .toString()
+      .slice(-4)}-${Date.now()}`;
+
+    // 🟢 Create Profile
+    const profile = await Profile.create({
+      userId,
+      cardOrderId: cardOrder._id,
+      viewId: uniqueViewId,
+      fullName,
+      email,
+      designation,
+      phoneNumber,
+      username: username || "",
+      brandName: brandName || "",
+      whatsappNumber: whatsappNumber || "",
+      bio: bio || "",
+      isActive: false,
+    });
+
+    // 🔗 Link profile to order
+    await CardOrder.findByIdAndUpdate(cardOrder._id, {
+      profileId: profile._id,
+    });
+
+    // 🔔 Create notification
+    await notificationSchema.create({
+      title: "New Profile Created by Admin! 👤",
+      name: fullName,
+      email: email,
+      content: `${fullName} (${email}) has created a new profile by Admin.`,
+      type: "profile",
+      relatedId: profile._id,
+    });
+
+    // ✅ Success response
+    return res.status(201).json({
+      message: "Profile and card order created successfully.",
+      order: cardOrder,
+      profile,
+      success: true,
+    });
+  } catch (error) {
+    console.error("CreateProfileByAdmin error:", error);
+    return res
+      .status(500)
+      .json({ message: "Internal server error.", success: false });
   }
 };

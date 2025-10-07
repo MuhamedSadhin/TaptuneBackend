@@ -1,5 +1,7 @@
+import mongoose from "mongoose";
 import CardOrder from "../models/cardOrders.js";
 import Profile from "../models/profileSchema.js";
+import User from "../models/userSchema.js";
 
 export const viewAllProfileOfAUser = async (req, res) => {
     try {
@@ -231,3 +233,152 @@ export const incrementProfileViews = async (req, res) => {
 };
 
 
+export const getProfilesCreatedByAdmin = async (req, res) => {
+  try {
+    const adminUsers = await User.find({
+      role: { $in: ["Admin", "admin"] },
+    }).select("_id");
+
+    if (!adminUsers.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No admin users found.",
+      });
+    }
+
+    const adminIds = adminUsers.map((user) => user._id);
+
+    const profiles = await Profile.find({ userId: { $in: adminIds } })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (!profiles.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No profiles found created by admin users.",
+      });
+    }
+
+
+    return res.status(200).json({
+      success: true,
+      count: profiles.length,
+      data: profiles,
+    });
+  } catch (error) {
+    console.error("Error fetching admin-created profiles:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching admin profiles.",
+    });
+  }
+};
+
+export const getUserForTransfer = async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email || email.trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Email query parameter is required.",
+      });
+    }
+
+    const users = await User.find({
+      email: { $regex: email, $options: "i" },
+    }).limit(5);
+
+    // Return empty array instead of 404
+    return res.status(200).json({
+      success: true,
+      message: users.length ? "Users found successfully." : "No users found.",
+      data: users, // may be empty
+    });
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error while fetching user.",
+    });
+  }
+};
+
+export async function transferProfileToUser(req, res) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  const { profileId, userId } = req.body;
+  console.log("Transfer request body:", req.body);
+
+  try {
+    if (!profileId || !userId) {
+      return res.status(400).json({
+        success: false,
+        message: "Profile ID and User ID are required.",
+      });
+    }
+
+    // Check if user exists
+    const user = await User.findById(userId).session(session);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
+    }
+
+    // Find profile
+    const profile = await Profile.findById(profileId).session(session);
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: "Profile not found.",
+      });
+    }
+    const cardOrder = await CardOrder.findById(profile.cardOrderId).session(session);
+
+    if (!cardOrder) {
+      return res.status(404).json({
+        success: false,
+        message: "Associated Card Order not found.",
+      });
+    }
+     
+    cardOrder.userId = userId;
+    await cardOrder.save({ session });
+
+    // Update profile's userId
+    profile.userId = userId;
+    await profile.save({ session });
+
+    // Update user's isOrdered
+    user.isOrdered = true;
+    await user.save({ session });
+
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    console.log("User updated:", user);
+    console.log("Profile updated:", profile);
+
+    // Send success response
+    return res.status(200).json({
+      success: true,
+      message: "Profile user transferred successfully.",
+      profile,
+      user,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("Transfer profile transaction error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error.",
+      error: error.message || error,
+    });
+  }
+}

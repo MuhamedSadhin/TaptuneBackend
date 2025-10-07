@@ -177,7 +177,7 @@ export const getUserHomepage = async (req, res) => {
     // Parallel queries
     const totalProfilesPromise = Profile.countDocuments({ userId });
     const totalConnectionsPromise = Connect.countDocuments({ userId });
-    const lastProfilesPromise = Profile.find({ userId }).limit(3);
+    const lastProfilesPromise = Profile.find({ userId }).populate("cardOrderId").limit(3);
     const lastConnectionsPromise = Connect.find({ userId })
       .sort({ createdAt: -1 })
       .limit(4);

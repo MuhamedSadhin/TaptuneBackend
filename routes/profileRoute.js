@@ -1,5 +1,5 @@
 import express from "express";
-import { editProfile, incrementProfileViews, updateStatusOfProfile, viewAllProfileOfAUser, viewProfileByTap } from "../controllers/profileController.js";
+import { editProfile, getProfilesCreatedByAdmin, getUserForTransfer, incrementProfileViews, transferProfileToUser, updateStatusOfProfile, viewAllProfileOfAUser, viewProfileByTap } from "../controllers/profileController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import { profileViewMiddleware } from "../middlewares/profileViewMiddleware.js";
 
@@ -14,4 +14,7 @@ router.post(
   profileViewMiddleware,
   incrementProfileViews
 );
+router.get("/getProfilesCreatedByAdmin", getProfilesCreatedByAdmin);
+router.post("/getUserForTransfer", getUserForTransfer);
+router.post("/transferProfile", transferProfileToUser);
 export default router;

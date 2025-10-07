@@ -1,4 +1,5 @@
 import Enquiry from "../models/ContactSchema.js";
+import notificationSchema from "../models/notificationSchema.js";
 
 export const getEnquiries = async (req, res) => { 
      try {
@@ -51,6 +52,16 @@ export const createEnquiry = async (req, res) => {
       });
 
       await enquiry.save();
+      
+          await notificationSchema.create({
+            title: " New Enquiry Received! 📩",
+            name,
+            email,
+            content: `${name} (${
+              phoneNumber || "N/A"
+            }) has submitted an enquiry.`,
+            type: "enquiry",
+          });
 
       res.status(201).json({
         success: true,

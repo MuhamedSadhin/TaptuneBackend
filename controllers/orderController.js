@@ -10,17 +10,30 @@ export const getAllOrders = async (req, res) => {
 
     const query = {};
 
+    if (status !== "all") {
+      query.status = status;
+    }
+
     if (search) {
       const searchRegex = new RegExp(search, "i");
+
+      const matchingUsers = await User.find({ email: searchRegex }).select(
+        "_id"
+      );
+      const userIds = matchingUsers.map((user) => user._id);
+
+      const matchingProfiles = await Profile.find({
+        $or: [{ fullName: searchRegex }, { email: searchRegex }],
+      }).select("_id");
+      const profileIds = matchingProfiles.map((profile) => profile._id);
+
       query.$or = [
         { fullName: searchRegex },
         { email: searchRegex },
         { designation: searchRegex },
+        { userId: { $in: userIds } },
+        { profileId: { $in: profileIds } },
       ];
-    }
-
-    if (status !== "all") {
-      query.status = status;
     }
 
     const totalCount = await CardOrder.countDocuments(query);
@@ -28,6 +41,7 @@ export const getAllOrders = async (req, res) => {
     const orders = await CardOrder.find(query)
       .populate("profileId")
       .populate("cardId")
+      .populate("userId")
       .sort({ createdAt: -1 })
       .skip((page - 1) * parseInt(limit))
       .limit(parseInt(limit));
@@ -35,14 +49,22 @@ export const getAllOrders = async (req, res) => {
     const results = orders.map((order) => {
       const profile = order.profileId || {};
       const card = order.cardId || {};
+      const user = order.userId || {};
+
       return {
         orderId: order._id,
         fullName: order.fullName || "",
         email: order.email || "",
-
+        designation: order.designation || "",
+        phoneNumber: order.phoneNumber || "",
+        logoImage: order.logoImage || "",
+        status: order.status,
+        quantity: order.quantity,
+        createdAt: order.createdAt,
         profileId: profile._id || null,
         profileEmail: profile.email || "",
         profileNumber: profile.phoneNumber || "",
+        profilePic: profile.profilePic || "",
         bio: profile.bio || "",
         userName: profile.brandName || "",
         watsappNumber: profile.watsappNumber || "",
@@ -50,21 +72,16 @@ export const getAllOrders = async (req, res) => {
         profileFullName: profile.fullName || "",
         viewId: profile.viewId || "",
         isActive: profile.isActive,
-
-        designation: order.designation || "",
-        phoneNumber: order.phoneNumber || "",
-        logoImage: order.logoImage || "",
-        status: order.status,
-        quantity: order.quantity,
-
         profilePic: profile.profilePic || "",
-        createdAt: order.createdAt,
         cardId: card._id || null,
         cardName: card.cardName || "",
         category: card.category || "",
         price: card.price || 0,
         frontImage: card.frontImage || "",
         backImage: card.backImage || "",
+
+        customerName: user.name || "",
+        customerEmail: user.email || "",
       };
     });
 
@@ -88,6 +105,7 @@ export const getAllOrders = async (req, res) => {
     });
   }
 };
+
 export const getOrderStats = async (req, res) => {
   try {
     const now = new Date();

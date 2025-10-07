@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Connect from "../models/connectSchema.js";
 import Profile from "../models/profileSchema.js";
+import notificationSchema from "../models/notificationSchema.js";
 
 
 export const viewAllConnections = async (req, res) => {
@@ -158,6 +159,15 @@ export const makeConnection = async (req, res) => {
         email: profile.email, // The email from the connected profile
       },
     };
+        await notificationSchema.create({
+          title: " New Connection Made! 🤝",
+          name: fullName, 
+          email,
+          userId: profile.userId, 
+          content: `${fullName}- (${email}) has connected with your profile.`,
+          type: "connection",
+          relatedId: newConnection._id,
+        });
 
     return res.status(201).json({
       success: true,
