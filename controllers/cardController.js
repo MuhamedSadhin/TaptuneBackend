@@ -8,7 +8,8 @@ import notificationSchema from "../models/notificationSchema.js";
 
 export const viewAllCards = async (req, res) => {
   try {
-    const isAdmin = req.user?.role =="admin" || false;
+    const isAdmin = req.user?.role == "Admin" || false;
+    console.log(req.user);
 
     let query = {};
     if (!isAdmin) {

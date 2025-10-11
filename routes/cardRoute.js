@@ -4,7 +4,7 @@ import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/viewAllCard", viewAllCards);
+router.get("/viewAllCard", protect,viewAllCards);
 router.get("/viewOneCard/:id", viewOneCard);
 router.post("/orderCardAndCreateProfile", protect, orderCardAndCreateProfile);
 router.post("/updateCard", updateCard);
