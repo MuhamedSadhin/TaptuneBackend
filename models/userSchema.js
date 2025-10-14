@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema(
     },
     accountType: {
       type: String,
+      default:"personal"
     },
     isOrdered: {
       type: Boolean,
@@ -36,7 +37,16 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-
+    codeExpires: {
+      type: Date,
+    },
+    verificationCode: {
+      type: String,
+    },
+    isOnboardingCompleted: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
