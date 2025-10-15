@@ -496,60 +496,69 @@ export const forgotPassword = async (req, res) => {
     await user.save();
 
     // Send OTP email
-    await sendEmail(
-      email,
-      "Taptune Password Reset OTP",
-      `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head><meta charset="UTF-8"><title>Password Reset</title></head>
-      <body style="margin:0;padding:0;font-family:system-ui;background-color:#f7f8fc;">
-        <table align="center" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px;margin:auto;background:#fff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-          <tr>
-            <td align="center" style="background:linear-gradient(135deg,#667eea,#764ba2);padding:40px 30px;border-radius:12px 12px 0 0;">
-              <img src="https://taptune.in/logo.png" alt="Taptune Logo" width="60" height="60" style="border-radius:8px;margin-bottom:10px;" />
-              <h1 style="color:#fff;font-size:28px;margin:0;">Taptune</h1>
-              <p style="color:#e2e8f0;font-size:16px;margin:5px 0 0;">Password Reset Request</p>
-            </td>
-          </tr>
+    await sendEmail({
+      to: email,
+      subject: "Taptune Password Reset OTP",
+      html: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Taptune Password Reset</title>
+</head>
+<body style="margin:0;padding:0;font-family:system-ui;background-color:#f7f8fc;">
+  <table align="center" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px;margin:auto;background:#fff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+    
+    <!-- Header -->
+    <tr>
+      <td align="center" style="background:linear-gradient(135deg,#667eea,#764ba2);padding:40px 30px;border-radius:12px 12px 0 0;">
+        <h1 style="color:#fff;font-size:32px;font-weight:bold;margin:0;">Taptune</h1>
+        <p style="color:#e2e8f0;font-size:18px;margin:5px 0 0;">by NeptuneMark Digital Creators</p>
+        <p style="color:#e2e8f0;font-size:16px;margin:10px 0 0;font-weight:500;">Password Reset Request</p>
+      </td>
+    </tr>
 
-          <tr>
-            <td style="padding:40px 30px;text-align:center;">
-              <h2 style="font-size:24px;font-weight:600;color:#1a202c;margin-bottom:20px;">Reset Your Password</h2>
-              <p style="font-size:16px;color:#4a5568;line-height:1.8;margin-bottom:40px;">
-                Use the code below to reset your password. This code is valid for 10 minutes only.
-              </p>
+    <!-- Body -->
+    <tr>
+      <td style="padding:40px 30px;text-align:center;">
+        <h2 style="font-size:24px;font-weight:600;color:#1a202c;margin-bottom:20px;">Reset Your Taptune Password</h2>
+        <p style="font-size:16px;color:#4a5568;line-height:1.8;margin-bottom:40px;">
+          Use the code below to reset your <strong>Taptune</strong> account password. This code is valid for 10 minutes only.
+        </p>
 
-              <div style="display:flex;justify-content:center;gap:10px;margin-bottom:40px;">
-                ${otp
-                  .split("")
-                  .map(
-                    (digit) =>
-                      `<div style="width:50px;height:50px;background:#edf2f7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#2d3748;">${digit}</div>`
-                  )
-                  .join("")}
-              </div>
+        <!-- OTP Container -->
+        <div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-bottom:40px;">
+          ${otp.split("").map(
+            (digit) =>
+              `<div style="width:60px;height:60px;background:#edf2f7;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:bold;color:#2d3748;box-shadow:0 2px 4px rgba(0,0,0,0.1);">${digit}</div>`
+          ).join("")}
+        </div>
 
-              <p style="font-size:14px;color:#718096;font-style:italic;">
-                Enter this code in the password reset form.
-              </p>
-            </td>
-          </tr>
+        <p style="font-size:14px;color:#718096;font-style:italic;">
+          Enter this code in the <strong>Taptune</strong> password reset form.
+        </p>
+      </td>
+    </tr>
 
-          <tr>
-            <td style="background:#f7f8fc;padding:30px;text-align:center;border-top:1px solid #e2e8f0;border-radius:0 0 12px 12px;">
-              <p style="color:#718096;font-size:14px;margin-bottom:5px;">
-                If you didn't request this, safely ignore this email.
-              </p>
-              <p style="color:#a0aec0;font-size:12px;margin:0;">
-                © 2025 Taptune. All rights reserved.<br/>Kerala, India
-              </p>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>`
-    );
+    <!-- Footer -->
+    <tr>
+      <td style="background:#f7f8fc;padding:30px;text-align:center;border-top:1px solid #e2e8f0;border-radius:0 0 12px 12px;">
+        <p style="color:#718096;font-size:14px;margin-bottom:5px;">
+          If you didn't request this, safely ignore this email.
+        </p>
+        <p style="color:#a0aec0;font-size:12px;margin:0;">
+          © 2025 NeptuneMark Digital Creators | <strong>Taptune</strong>. All rights reserved.<br/>Kerala, India
+        </p>
+      </td>
+    </tr>
+
+  </table>
+</body>
+</html>
+`,
+text: `Your OTP for Taptune password reset is ${otp}. It is valid for 10 minutes.`
+    });
+    console.log(`OTP ${otp} sent to ${email} (expires at ${expiry})`);
 
     return res.json({ success: true, message: "OTP sent to your email" });
   } catch (err) {
