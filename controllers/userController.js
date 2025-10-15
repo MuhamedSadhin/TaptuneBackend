@@ -170,15 +170,89 @@ export const updateAdmin = async (req, res) => {
 };
 
 
+// export const getUserHomepage = async (req, res) => {
+//   try {
+//     const userId = req.user._id;
+
+//     // Parallel queries
+//     const totalProfilesPromise = Profile.countDocuments({ userId });
+//     const totalConnectionsPromise = Connect.countDocuments({ userId });
+//     const lastProfilesPromise = Profile.find({ userId }).populate("cardOrderId").limit(3);
+//     const lastConnectionsPromise = Connect.find({ userId })
+//       .sort({ createdAt: -1 })
+//       .limit(4);
+
+//     // 👇 Aggregate total profile views for this user
+//     const totalProfileViewsPromise = Profile.aggregate([
+//       { $match: { userId } },
+//       { $group: { _id: null, totalViews: { $sum: "$profileViews" } } },
+//     ]);
+
+//     const [
+//       totalProfiles,
+//       totalConnections,
+//       lastProfiles,
+//       lastConnections,
+//       totalProfileViewsResult,
+//     ] = await Promise.all([
+//       totalProfilesPromise,
+//       totalConnectionsPromise,
+//       lastProfilesPromise,
+//       lastConnectionsPromise,
+//       totalProfileViewsPromise,
+//     ]);
+
+//     const totalProfileViews =
+//       totalProfileViewsResult.length > 0
+//         ? totalProfileViewsResult[0].totalViews
+//         : 0;
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Homepage data fetched successfully",
+//       data: {
+//         totalProfiles,
+//         totalConnections,
+//         totalProfileViews, // ✅ Added total views
+//         lastProfiles,
+//         lastConnections,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching homepage data:", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to fetch homepage data",
+//       error: error.message,
+//     });
+//   }
+// };
+
+
 export const getUserHomepage = async (req, res) => {
   try {
     const userId = req.user._id;
 
+    // Get all profile IDs of this user
+    const userProfiles = await Profile.find({ userId }).select("_id");
+
+    const profileIds = userProfiles.map((p) => p._id);
+
     // Parallel queries
     const totalProfilesPromise = Profile.countDocuments({ userId });
-    const totalConnectionsPromise = Connect.countDocuments({ userId });
-    const lastProfilesPromise = Profile.find({ userId }).populate("cardOrderId").limit(3);
-    const lastConnectionsPromise = Connect.find({ userId })
+    const totalConnectionsPromise = Connect.countDocuments({
+      profileId: { $in: profileIds },
+    });
+
+    const lastProfilesPromise = Profile.find({ userId })
+      .populate("cardOrderId")
+      .sort({ createdAt: -1 })
+      .limit(3);
+
+    const lastConnectionsPromise = Connect.find({
+      profileId: { $in: profileIds },
+    })
+      .populate("profileId", "fullName profileImage cardName") // populate profile info
       .sort({ createdAt: -1 })
       .limit(4);
 
@@ -188,6 +262,7 @@ export const getUserHomepage = async (req, res) => {
       { $group: { _id: null, totalViews: { $sum: "$profileViews" } } },
     ]);
 
+    // Execute all in parallel
     const [
       totalProfiles,
       totalConnections,
@@ -213,7 +288,7 @@ export const getUserHomepage = async (req, res) => {
       data: {
         totalProfiles,
         totalConnections,
-        totalProfileViews, // ✅ Added total views
+        totalProfileViews,
         lastProfiles,
         lastConnections,
       },
@@ -227,8 +302,6 @@ export const getUserHomepage = async (req, res) => {
     });
   }
 };
-
-
 
 export const updatePhoneNumber = async (req, res) => {
   try {

@@ -481,11 +481,13 @@ export const forgotPassword = async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
+    }
 
+    // Generate 6-digit OTP & expiry time
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 mins expiry
 
@@ -493,84 +495,71 @@ export const forgotPassword = async (req, res) => {
     user.codeExpires = expiry;
     await user.save();
 
+    // Send OTP email
     await sendEmail(
       email,
       "Taptune Password Reset OTP",
-      `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Password Reset</title>
-</head>
-<body style="margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f8fc;">
-  <table align="center" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px; margin:auto; background:#ffffff; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-    <!-- Header -->
-    <tr>
-      <td align="center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; border-radius:12px 12px 0 0;">
-        <img src="https://taptune.in/logo.png" alt="Taptune Logo" width="60" height="60" style="border-radius:8px; margin-bottom:10px;" />
-        <h1 style="color:#fff; font-size:28px; margin:0;">Taptune</h1>
-        <p style="color:#e2e8f0; font-size:16px; margin:5px 0 0;">Password Reset Request</p>
-      </td>
-    </tr>
+      `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head><meta charset="UTF-8"><title>Password Reset</title></head>
+      <body style="margin:0;padding:0;font-family:system-ui;background-color:#f7f8fc;">
+        <table align="center" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px;margin:auto;background:#fff;border-radius:12px;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+          <tr>
+            <td align="center" style="background:linear-gradient(135deg,#667eea,#764ba2);padding:40px 30px;border-radius:12px 12px 0 0;">
+              <img src="https://taptune.in/logo.png" alt="Taptune Logo" width="60" height="60" style="border-radius:8px;margin-bottom:10px;" />
+              <h1 style="color:#fff;font-size:28px;margin:0;">Taptune</h1>
+              <p style="color:#e2e8f0;font-size:16px;margin:5px 0 0;">Password Reset Request</p>
+            </td>
+          </tr>
 
-    <!-- Content -->
-    <tr>
-      <td style="padding:40px 30px; text-align:center;">
-        <h2 style="font-size:24px; font-weight:600; color:#1a202c; margin-bottom:20px;">Reset Your Password</h2>
-        <p style="font-size:16px; color:#4a5568; line-height:1.8; margin-bottom:40px;">
-          Use the code below to reset your password. This code is valid for 10 minutes only.
-        </p>
+          <tr>
+            <td style="padding:40px 30px;text-align:center;">
+              <h2 style="font-size:24px;font-weight:600;color:#1a202c;margin-bottom:20px;">Reset Your Password</h2>
+              <p style="font-size:16px;color:#4a5568;line-height:1.8;margin-bottom:40px;">
+                Use the code below to reset your password. This code is valid for 10 minutes only.
+              </p>
 
-        <!-- OTP Box -->
-        <div style="display:flex; justify-content:center; gap:10px; margin-bottom:40px;">
-          ${otp
-            .split("")
-            .map(
-              (digit) =>
-                `<div style="width:50px; height:50px; background:#edf2f7; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold; color:#2d3748;">${digit}</div>`
-            )
-            .join("")}
-        </div>
+              <div style="display:flex;justify-content:center;gap:10px;margin-bottom:40px;">
+                ${otp
+                  .split("")
+                  .map(
+                    (digit) =>
+                      `<div style="width:50px;height:50px;background:#edf2f7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;color:#2d3748;">${digit}</div>`
+                  )
+                  .join("")}
+              </div>
 
-        <p style="font-size:14px; color:#718096; font-style:italic;">
-          Enter this code in the password reset form.
-        </p>
-      </td>
-    </tr>
+              <p style="font-size:14px;color:#718096;font-style:italic;">
+                Enter this code in the password reset form.
+              </p>
+            </td>
+          </tr>
 
-    <!-- Footer -->
-    <tr>
-      <td style="background:#f7f8fc; padding:30px; text-align:center; border-top:1px solid #e2e8f0; border-radius:0 0 12px 12px;">
-        <p style="color:#718096; font-size:14px; margin-bottom:5px;">
-          If you didn't request this, safely ignore this email.
-        </p>
-        <p style="color:#a0aec0; font-size:12px; margin:0;">
-          © 2025 Taptune. All rights reserved.<br/>
-          123 Business Street, Kerala, India
-        </p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+          <tr>
+            <td style="background:#f7f8fc;padding:30px;text-align:center;border-top:1px solid #e2e8f0;border-radius:0 0 12px 12px;">
+              <p style="color:#718096;font-size:14px;margin-bottom:5px;">
+                If you didn't request this, safely ignore this email.
+              </p>
+              <p style="color:#a0aec0;font-size:12px;margin:0;">
+                © 2025 Taptune. All rights reserved.<br/>Kerala, India
+              </p>
+            </td>
+          </tr>
+        </table>
+      </body>
+      </html>`
     );
 
-    res.json({ success: true, message: "OTP sent to email" });
+    return res.json({ success: true, message: "OTP sent to your email" });
   } catch (err) {
     console.error("Send email error:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Failed to send OTP. Try again later.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send OTP. Please try again later.",
+    });
   }
 };
-
-
-
-
-
 
 
 export const verifyOtp = async (req, res) => {
@@ -584,7 +573,6 @@ export const verifyOtp = async (req, res) => {
 
   try {
     const user = await User.findOne({ email });
-
     if (!user) {
       return res
         .status(404)
@@ -601,41 +589,43 @@ export const verifyOtp = async (req, res) => {
         .json({ success: false, message: "OTP has expired" });
     }
 
+    // Clear OTP after successful verification
     user.verificationCode = "";
     user.codeExpires = null;
     await user.save();
 
-    res.json({ success: true, message: "OTP verified successfully" });
+    return res.json({ success: true, message: "OTP verified successfully" });
   } catch (err) {
     console.error("OTP verification error:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Server error. Please try again later.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
   }
 };
+
+
+
 
 export const createNewPassword = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Email and new password are required" });
+    return res.status(400).json({
+      success: false,
+      message: "Email and new password are required",
+    });
   }
 
   if (password.length < 8) {
     return res.status(400).json({
       success: false,
-      message: "Password must be at least 8 characters",
+      message: "Password must be at least 8 characters long",
     });
   }
 
   try {
     const user = await User.findOne({ email });
-
     if (!user) {
       return res
         .status(404)
@@ -646,20 +636,17 @@ export const createNewPassword = async (req, res) => {
     user.password = hashedPassword;
     user.verificationCode = "";
     user.codeExpires = null;
-
     await user.save();
 
-    res.json({
+    return res.json({
       success: true,
       message: "Password reset successfully. You can now login!",
     });
   } catch (err) {
     console.error("Password reset error:", err);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Server error. Please try again later.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Server error. Please try again later.",
+    });
   }
 };
