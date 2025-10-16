@@ -235,30 +235,35 @@ export const incrementProfileViews = async (req, res) => {
 
 export const getProfilesCreatedByAdmin = async (req, res) => {
   try {
-    const adminUsers = await User.find({
-      role: { $in: ["Admin", "admin"] },
-    }).select("_id");
+    const loggedInUser = req.user;
+    const userRole = (loggedInUser.role || "").toLowerCase();
 
-    if (!adminUsers.length) {
-      return res.status(404).json({
+    let creatorIds = [];
+
+    if (userRole === "admin") {
+      const adminsAndSales = await User.find({
+        role: { $in: ["Admin", "admin", "Sales", "sales"] },
+      }).select("_id");
+      creatorIds = adminsAndSales.map((user) => user._id);
+    } else if (userRole === "sales") {
+      creatorIds = [loggedInUser._id];
+    } else {
+      return res.status(403).json({
         success: false,
-        message: "No admin users found.",
+        message: "You do not have permission to view profiles.",
       });
     }
 
-    const adminIds = adminUsers.map((user) => user._id);
-
-    const profiles = await Profile.find({ userId: { $in: adminIds } })
+    const profiles = await Profile.find({ userId: { $in: creatorIds } })
       .sort({ createdAt: -1 })
       .lean();
 
     if (!profiles.length) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
-        message: "No profiles found created by admin users.",
+        message: "No profiles found for the current user role.",
       });
     }
-
 
     return res.status(200).json({
       success: true,
@@ -266,10 +271,11 @@ export const getProfilesCreatedByAdmin = async (req, res) => {
       data: profiles,
     });
   } catch (error) {
-    console.error("Error fetching admin-created profiles:", error);
+    console.error("Error fetching profiles:", error);
     return res.status(500).json({
       success: false,
-      message: "Internal server error while fetching admin profiles.",
+      message: "Internal server error while fetching profiles.",
+      error: error.message,
     });
   }
 };

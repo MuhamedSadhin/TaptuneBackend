@@ -5,7 +5,7 @@ import { protect } from "../middlewares/authMiddleware.js";
 const router = express.Router();
 
 
-router.get("/getAllUsers", getAllUsers);
+router.get("/getAllUsers",protect, getAllUsers);
 router.get("/getAllAdmins", getAllAdmins); 
 router.post("/createAdmin", createAdmin); 
 router.post("/updateAdmin", updateAdmin); 

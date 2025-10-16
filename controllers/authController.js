@@ -95,9 +95,9 @@ export const loginUser = async (req, res) => {
 
 export const signUp = async (req, res) => {
   try {
-    const { name, email, password, phoneNumber, accountType } = req.body;
-    console.log("signup", req.body);
-
+    const { name, email, password, phoneNumber, accountType, referralCode } =
+      req.body;
+    console.log("Signup request body:", req.body);
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -114,6 +114,16 @@ export const signUp = async (req, res) => {
       });
     }
 
+    let referalId = null;
+    if (referralCode) {
+      const referrer = await User.findOne({ referalCode:referralCode });
+      if (referrer) {
+        referalId = referrer._id;
+        console.log(`Referral found — parent ID: ${referalId}`);
+      } else {
+        console.warn("⚠️ Invalid referral code provided, ignoring it.");
+      }
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
@@ -126,6 +136,7 @@ export const signUp = async (req, res) => {
       isActive: true,
       accountType: accountType || "personal",
       isOnboardingCompleted: false,
+      ...(referalId && { referalId }),
     });
 
     await newUser.save();
@@ -134,37 +145,36 @@ export const signUp = async (req, res) => {
       title: "New Member Joined! 👋",
       name: newUser.name,
       email: newUser.email,
-      content: `${newUser.name}  -  (${newUser.email}) has created an account.`,
+      content: `${newUser.name} (${newUser.email}) has created an account.`,
     });
 
     let whatsappResponse = null;
-    
-if (phoneNumber) {
-  whatsappResponse = await sendWhatsAppTemplateMessage(
-    "226076", 
-    "https://bot-data.s3.ap-southeast-1.wasabisys.com/upload/2025/8/flowbuilder/flowbuilder-108017-1756203446.png",
-    phoneNumber,
-    name, 
-    "169013" 
-  );
+    if (phoneNumber) {
+      whatsappResponse = await sendWhatsAppTemplateMessage(
+        "226076",
+        "https://bot-data.s3.ap-southeast-1.wasabisys.com/upload/2025/8/flowbuilder/flowbuilder-108017-1756203446.png",
+        phoneNumber,
+        name,
+        "169013"
+      );
     }
-    
-        const token = jwt.sign(
-          { id: newUser._id, role: newUser.role },
-          JWT_SECRET,
-          {
-            expiresIn: "7d",
-          }
-        );
-    
-        res.cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-          maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
-    
-    res.status(201).json({
+
+    const token = jwt.sign(
+      { id: newUser._id, role: newUser.role },
+      JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(201).json({
       success: true,
       message: "User registered successfully",
       user: {
@@ -175,12 +185,13 @@ if (phoneNumber) {
         accountType: newUser.accountType,
         isOnboardingCompleted: newUser.isOnboardingCompleted,
         phoneNumber: newUser.phoneNumber,
+        referalId: newUser.referalId || null,
       },
       whatsapp: whatsappResponse,
     });
   } catch (error) {
     console.error("Signup error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Server error during signup.",
     });

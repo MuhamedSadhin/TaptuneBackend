@@ -5,8 +5,8 @@ import { getAllOrders, getChartDetails, getOrderAndUserForAdminHomePage, getOrde
 const router = express.Router();
 
 
-router.get("/getAllOrders", getAllOrders);
-router.get("/getOrderStatistics", getOrderStats);
+router.get("/getAllOrders", protect,getAllOrders);
+router.get("/getOrderStatistics",protect ,getOrderStats);
 router.get("/adminStats", getStatsForAdmin);
 router.get("/getAdminAndUserForAdminHomePage", getOrderAndUserForAdminHomePage);
 router.get("/getChartData", getChartDetails);

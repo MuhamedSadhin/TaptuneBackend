@@ -347,9 +347,9 @@ export const CreateProfileByAdmin = async (req, res) => {
       quantity,
     } = req.body;
 
-    const userId = req.user?.id;
+    const userId = req.user?._id;
 
-    // 🛑 Validate required fields
+
     if (
       !userId ||
       !fullName ||

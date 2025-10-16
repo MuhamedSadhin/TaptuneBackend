@@ -3,16 +3,20 @@ import User from "../models/userSchema.js";
 import Profile from "../models/profileSchema.js";
 import Connect from "../models/connectSchema.js";
 
-export const getAllUsers = async (req, res) => {
 
+export const getAllUsers = async (req, res) => {
   try {
+    const loggedInUser = req.user; // Must be set by auth middleware
     const { page = 1, limit = 10, search = "" } = req.query;
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
 
-    const searchQuery = {
-      role: "user",
+    // Case-insensitive role check
+    const userRole = (loggedInUser.role || "").toLowerCase();
+
+    // Base search query
+    let searchQuery = {
       $or: [
         { name: { $regex: search, $options: "i" } },
         { email: { $regex: search, $options: "i" } },
@@ -20,8 +24,23 @@ export const getAllUsers = async (req, res) => {
       ],
     };
 
+    // Role-based filtering
+    if (userRole === "admin") {
+      searchQuery.role = "user"; // Admin sees all users
+    } else if (userRole === "sales") {
+      searchQuery.role = "user";
+      searchQuery.referalId = loggedInUser._id; // Sales sees only referred users
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to view users",
+      });
+    }
+
+    // Count total users
     const totalUsers = await User.countDocuments(searchQuery);
 
+    // Fetch users with pagination
     const users = await User.find(searchQuery)
       .sort({ createdAt: -1 })
       .skip((pageNum - 1) * limitNum)
@@ -29,7 +48,7 @@ export const getAllUsers = async (req, res) => {
 
     const totalPages = Math.ceil(totalUsers / limitNum);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Users fetched successfully",
       data: users,
@@ -37,13 +56,14 @@ export const getAllUsers = async (req, res) => {
       currentPage: pageNum,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Failed to fetch users",
       error: error.message,
     });
   }
 };
+
 
 export const getAllAdmins = async (req, res) => {
   try {
@@ -86,17 +106,7 @@ export const createAdmin = async (req, res) => {
   try {
     const { name, email, password, phoneNumber, role } = req.body;
 
-    // Role must NOT be "user"
-    if (!role || role === "user") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Invalid role. Role must be admin or another type.",
-        });
-    }
-
-    // Check if email already exists
+    // Check for existing user
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res
@@ -108,26 +118,51 @@ export const createAdmin = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const newAdmin = await User.create({
+    let referalCode = null;
+
+    // 🔹 Generate referral code if role is 'sales'
+    if (role && role.toLowerCase() === "sales") {
+      const generateCode = () =>
+        Array.from({ length: 6 }, () =>
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".charAt(
+            Math.floor(Math.random() * 36)
+          )
+        ).join("");
+
+      // Keep generating until a unique one is found
+      while (true) {
+        const randomCode = generateCode();
+        const exists = await User.exists({ referalCode: randomCode });
+        if (!exists) {
+          referalCode = randomCode;
+          break;
+        }
+      }
+    }
+
+    // Create new admin or sales user
+    const newUser = await User.create({
       name,
       email,
       password: hashedPassword,
       phoneNumber,
       role,
+      referalCode,
       isActive: true,
       isOrdered: false,
     });
 
     return res.status(201).json({
       success: true,
-      message: "Admin created successfully",
+      message: `${role} created successfully.`,
       data: {
-        id: newAdmin._id,
-        name: newAdmin.name,
-        email: newAdmin.email,
-        phoneNumber: newAdmin.phoneNumber,
-        role: newAdmin.role,
-        isActive: newAdmin.isActive,
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        phoneNumber: newUser.phoneNumber,
+        role: newUser.role,
+        referalCode: newUser.referalCode || null,
+        isActive: newUser.isActive,
       },
     });
   } catch (error) {
@@ -137,6 +172,7 @@ export const createAdmin = async (req, res) => {
       .json({ success: false, message: "Internal Server Error" });
   }
 };
+
 
 export const updateAdmin = async (req, res) => {
   try {

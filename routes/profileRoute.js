@@ -14,7 +14,7 @@ router.post(
   profileViewMiddleware,
   incrementProfileViews
 );
-router.get("/getProfilesCreatedByAdmin", getProfilesCreatedByAdmin);
+router.get("/getProfilesCreatedByAdmin", protect,getProfilesCreatedByAdmin);
 router.post("/getUserForTransfer", getUserForTransfer);
 router.post("/transferProfile", transferProfileToUser);
 export default router;

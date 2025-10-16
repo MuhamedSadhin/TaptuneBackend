@@ -29,6 +29,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       default:"personal"
     },
+    referalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    referalCode: {
+      type: String,
+    },
     isOrdered: {
       type: Boolean,
       default: false,
