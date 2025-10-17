@@ -121,7 +121,7 @@ export const createAdmin = async (req, res) => {
     let referalCode = null;
 
     // 🔹 Generate referral code if role is 'sales'
-    if (role && role.toLowerCase() === "sales") {
+    if (role && role.toLowerCase() == "sales") {
       const generateCode = () =>
         Array.from({ length: 6 }, () =>
           "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".charAt(
