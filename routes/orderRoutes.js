@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.get("/getAllOrders", protect,getAllOrders);
 router.get("/getOrderStatistics",protect ,getOrderStats);
-router.get("/adminStats", getStatsForAdmin);
-router.get("/getAdminAndUserForAdminHomePage", getOrderAndUserForAdminHomePage);
-router.get("/getChartData", getChartDetails);
+router.get("/adminStats",protect,getStatsForAdmin);
+router.get("/getAdminAndUserForAdminHomePage",protect, getOrderAndUserForAdminHomePage);
+router.get("/getChartData", protect,getChartDetails);
 
 export default router;

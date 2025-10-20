@@ -82,6 +82,7 @@ export const loginUser = async (req, res) => {
         isActive: user.isActive,
         accountType: user.accountType,
         isOnboardingCompleted: user.isOnboardingCompleted,
+        referalCode: user.referalCode || null,
       },
     });
   } catch (error) {
@@ -97,7 +98,7 @@ export const signUp = async (req, res) => {
   try {
     const { name, email, password, phoneNumber, accountType, referralCode } =
       req.body;
-    console.log("Signup request body:", req.body);
+    console.log("Signup request body:", req.body); 
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -205,7 +206,7 @@ export const getAuthenticatedUser = async (req, res) => {
     }
 
     const user = await User.findById(req.user._id).select(
-      "_id name email role profilePic isActive phoneNumber accountType isOnboardingCompleted"
+      "_id name email role profilePic isActive phoneNumber accountType isOnboardingCompleted referalCode"
     );
 
     if (!user) {
@@ -275,6 +276,7 @@ export const updateUserSettings = async (req, res) => {
         role: user.role,
         isActive: user.isActive,
         accountType: user.accountType,
+
       },
     });
   } catch (error) {
