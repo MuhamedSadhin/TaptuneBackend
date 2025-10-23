@@ -32,6 +32,13 @@ export const loginUser = async (req, res) => {
         message: "Invalid email or password.",
       });
     }
+        if (user.role?.toLowerCase() === "sales" && !user.isActive) {
+          return res.status(403).json({
+            success: false,
+            message:
+              "Sales account has been deactivated. Please contact Support Team.",
+          });
+        }
 
     if (!user.password || user.password == "") {
       return res.status(401).json({

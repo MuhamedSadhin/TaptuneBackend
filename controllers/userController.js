@@ -2,17 +2,19 @@ import bcrypt from "bcryptjs";
 import User from "../models/userSchema.js";
 import Profile from "../models/profileSchema.js";
 import Connect from "../models/connectSchema.js";
+import CardOrder from "../models/cardOrders.js";
 
 
 export const getAllUsers = async (req, res) => {
   try {
     const loggedInUser = req.user; // Must be set by auth middleware
-    const { page = 1, limit = 10, search = "" } = req.query;
+    const { page = 1, limit = 10, search = "", salesmanId } = req.query;
+    console.log("req.query:", req.query);
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
 
-    // Case-insensitive role check
+    // Case-insensitive role
     const userRole = (loggedInUser.role || "").toLowerCase();
 
     // Base search query
@@ -27,6 +29,19 @@ export const getAllUsers = async (req, res) => {
     // Role-based filtering
     if (userRole === "admin") {
       searchQuery.role = "user"; // Admin sees all users
+
+            if (salesmanId) {
+              if (salesmanId == "all") {
+                // Do nothing, return all users
+              } else if (salesmanId == "directLead") {
+                // Only direct leads (no salesman assigned)
+                searchQuery.referalId = null;
+              } else {
+                // Filter by specific salesman
+                searchQuery.referalId = salesmanId;
+              }
+            }
+      // if salesmanId === "all" => do nothing, return all users
     } else if (userRole === "sales") {
       searchQuery.role = "user";
       searchQuery.referalId = loggedInUser._id; // Sales sees only referred users
@@ -42,6 +57,7 @@ export const getAllUsers = async (req, res) => {
 
     // Fetch users with pagination
     const users = await User.find(searchQuery)
+      .populate("referalId", "name email") // populate salesman info
       .sort({ createdAt: -1 })
       .skip((pageNum - 1) * limitNum)
       .limit(limitNum);
@@ -54,8 +70,10 @@ export const getAllUsers = async (req, res) => {
       data: users,
       totalPages,
       currentPage: pageNum,
+      totalUsers,
     });
   } catch (error) {
+    console.error("Error fetching users:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch users",
@@ -63,6 +81,7 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
+
 
 
 export const getAllAdmins = async (req, res) => {
@@ -377,3 +396,8 @@ export const updatePhoneNumber = async (req, res) => {
     res.status(500).json({ message: "Server error. Please try again later." });
   }
 };
+
+
+
+
+
