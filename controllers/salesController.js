@@ -265,7 +265,6 @@ export const assignUsersToSalesman = async (req, res) => {
   try {
     const { salesmanId, userIds, isDirectLead } = req.body;
 
-    console.log("Assigning users:", { salesmanId, userIds, isDirectLead });
 
     if (!Array.isArray(userIds) || userIds.length === 0) {
       return res.status(400).json({

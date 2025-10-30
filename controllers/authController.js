@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 import notificationSchema from "../models/notificationSchema.js";
 import { sendEmail } from "../utils/SendEmail.js";
 import { oauth2Client } from "../utils/googleClient.js";
+import BusinessSubscription from "../models/BuisnessSubsciptionSchema.js";
 dotenv.config();
 
 
@@ -103,14 +104,31 @@ export const loginUser = async (req, res) => {
 
 export const signUp = async (req, res) => {
   try {
-    const { name, email, password, phoneNumber, accountType, referralCode } =
-      req.body;
-    console.log("Signup request body:", req.body); 
+    const {
+      name,
+      email,
+      password,
+      confirmPassword,
+      phoneNumber,
+      accountType,
+      referralCode,
+      planId,
+      paymentDetails,
+    } = req.body;
+
+    console.log("📥 Signup request body:", req.body);
 
     if (!name || !email || !password) {
       return res.status(400).json({
         success: false,
         message: "Name, email, and password are required.",
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Passwords do not match.",
       });
     }
 
@@ -124,17 +142,17 @@ export const signUp = async (req, res) => {
 
     let referalId = null;
     if (referralCode) {
-      const referrer = await User.findOne({ referalCode:referralCode });
+      const referrer = await User.findOne({ referalCode: referralCode });
       if (referrer) {
         referalId = referrer._id;
-        console.log(`Referral found — parent ID: ${referalId}`);
       } else {
         console.warn("⚠️ Invalid referral code provided, ignoring it.");
       }
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
+    const newUser = await User.create({
       name,
       email,
       password: hashedPassword,
@@ -147,8 +165,62 @@ export const signUp = async (req, res) => {
       ...(referalId && { referalId }),
     });
 
-    await newUser.save();
+    if (accountType === "business") {
+      if (!planId) {
+        await User.findByIdAndDelete(newUser._id);
+        return res.status(400).json({
+          success: false,
+          message: "Plan ID is required for business accounts.",
+        });
+      }
 
+      if (
+        !paymentDetails ||
+        !paymentDetails.razorpayOrderId ||
+        !paymentDetails.razorpayPaymentId ||
+        !paymentDetails.razorpaySignature
+      ) {
+        await User.findByIdAndDelete(newUser._id);
+        return res.status(400).json({
+          success: false,
+          message:
+            "Payment details are missing. Please complete the payment before signing up.",
+        });
+      }
+
+      const {
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature,
+        paymentStatus,
+      } = paymentDetails;
+
+      if (paymentStatus !== "paid") {
+        await User.findByIdAndDelete(newUser._id);
+        return res.status(400).json({
+          success: false,
+          message: "Payment not completed. Please try again.",
+        });
+      }
+
+      const subscriptionDurationDays = 365;
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + subscriptionDurationDays);
+
+      await BusinessSubscription.create({
+        userId: newUser._id,
+        planId,
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature,
+        paymentStatus,
+        endDate,
+      });
+
+      console.log("✅ Business subscription created for:", newUser.email);
+    }
+
+    // 🔔 Create notification
     await notificationSchema.create({
       title: "New Member Joined! 👋",
       name: newUser.name,
@@ -156,6 +228,7 @@ export const signUp = async (req, res) => {
       content: `${newUser.name} (${newUser.email}) has created an account.`,
     });
 
+    // 💬 Optional WhatsApp message
     let whatsappResponse = null;
     if (phoneNumber) {
       whatsappResponse = await sendWhatsAppTemplateMessage(
@@ -167,6 +240,7 @@ export const signUp = async (req, res) => {
       );
     }
 
+    // 🔑 JWT token
     const token = jwt.sign(
       { id: newUser._id, role: newUser.role },
       JWT_SECRET,
@@ -175,6 +249,7 @@ export const signUp = async (req, res) => {
       }
     );
 
+    // 🍪 Set cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -182,6 +257,7 @@ export const signUp = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    // ✅ Final response
     return res.status(201).json({
       success: true,
       message: "User registered successfully",
@@ -198,7 +274,7 @@ export const signUp = async (req, res) => {
       whatsapp: whatsappResponse,
     });
   } catch (error) {
-    console.error("Signup error:", error);
+    console.error("❌ Signup error:", error);
     return res.status(500).json({
       success: false,
       message: "Server error during signup.",
@@ -317,98 +393,6 @@ export const logoutUser = (req, res) => {
 };
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// export const googleAuth = async (req, res) => {
-//   console.log("GOOGLE_REDIRECT_URI:", process.env.GOOGLE_REDIRECT_URI);
-
-//   try {
-//     const { code } = req.body;
-
-//     if (!code)
-//       return res
-//         .status(400)
-//         .json({ success: false, message: "Authorization code is required" });
-
-//     // 1️⃣ Exchange code for access token
-//     const tokenRes = await axios.get(
-//       "https://oauth2.googleapis.com/token",
-//       new URLSearchParams({
-//         code,
-//         client_id: process.env.GOOGLE_CLIENT_ID,
-//         client_secret: process.env.GOOGLE_CLIENT_SECRET,
-//         redirect_uri: process.env.GOOGLE_REDIRECT_URI,
-//         grant_type: "authorization_code",
-//       }),
-//       { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
-//     );
-
-//     const { access_token } = tokenRes.data;
-//     if (!access_token)
-//       return res
-//         .status(400)
-//         .json({ success: false, message: "Failed to get access token" });
-
-//     // 2️⃣ Get user profile
-//     const profileRes = await axios.get(
-//       "https://www.googleapis.com/oauth2/v3/userinfo",
-//       { headers: { Authorization: `Bearer ${access_token}` } }
-//     );
-
-//     const profile = profileRes.data;
-
-//     // 3️⃣ Find or create user
-//     let user = await User.findOne({ email: profile.email });
-//     if (!user) {
-//       user = await User.create({
-//         googleId: profile.sub,
-//         name: profile.name,
-//         email: profile.email,
-//         profilePic: profile.picture,
-//         role: "user",
-//         isActive: true,
-//       });
-//     }
-
-//     // 4️⃣ Generate JWT
-//     const token = jwt.sign(
-//       { id: user._id, email: user.email },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "7d" }
-//     );
-
-//     // 5️⃣ Set cookie
-//     res.setHeader(
-//       "Set-Cookie",
-//       cookie.serialize("token", token, {
-//         httpOnly: true,
-//         secure: process.env.NODE_ENV === "production",
-//         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-//         maxAge: 7 * 24 * 60 * 60,
-//         path: "/",
-//       })
-//     );
-
-//     // 6️⃣ Respond to frontend
-//     res.status(200).json({
-//       success: true,
-//       message: "Login successful",
-//       user: {
-//         id: user._id,
-//         name: user.name,
-//         email: user.email,
-//         role: user.role,
-//         profilePic: user.profilePic,
-//         isActive: user.isActive,
-//       },
-//     });
-//   } catch (err) {
-//     console.error("Google Auth Error:", err);
-//     res
-//       .status(500)
-//       .json({ success: false, message: "Login failed", error: err.message });
-//   }
-// };
-
-
 
 export const googleAuth = async (req, res, next) => {
   try {
@@ -450,7 +434,6 @@ export const googleAuth = async (req, res, next) => {
       });
     }
 
-    console.log("Redirect URI being used:", oauth2Client.redirectUri);
 
     // 🔹 Generate JWT token
     const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, {
@@ -491,7 +474,6 @@ export const googleAuth = async (req, res, next) => {
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
-  console.log("Forgot password request for email:", email);
 
   if (!email) {
     return res
@@ -578,7 +560,6 @@ export const forgotPassword = async (req, res) => {
 `,
 text: `Your OTP for Taptune password reset is ${otp}. It is valid for 10 minutes.`
     });
-    console.log(`OTP ${otp} sent to ${email} (expires at ${expiry})`);
 
     return res.json({ success: true, message: "OTP sent to your email" });
   } catch (err) {

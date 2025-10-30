@@ -46,7 +46,6 @@ export const viewProfileByTap = async (req, res) => {
         select: "name email role", 
       })
       .lean();
-    console.log("profile view ", profile);
     if (!profile) {
       return res.status(404).json({
         success: false,
@@ -188,7 +187,6 @@ export const updateStatusOfProfile = async (req, res) => {
 export const incrementProfileViews = async (req, res) => {
   try {
     const { id } = req.query;
-    console.log("user :", req.user);
 
     const profile = await Profile.findById(id);
     if (!profile) {
@@ -315,7 +313,6 @@ export async function transferProfileToUser(req, res) {
   session.startTransaction();
 
   const { profileId, userId } = req.body;
-  console.log("Transfer request body:", req.body);
 
   try {
     if (!profileId || !userId) {
@@ -366,8 +363,7 @@ export async function transferProfileToUser(req, res) {
     await session.commitTransaction();
     session.endSession();
 
-    console.log("User updated:", user);
-    console.log("Profile updated:", profile);
+
 
     // Send success response
     return res.status(200).json({

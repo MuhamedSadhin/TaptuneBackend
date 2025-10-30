@@ -9,7 +9,6 @@ export const getAllUsers = async (req, res) => {
   try {
     const loggedInUser = req.user; // Must be set by auth middleware
     const { page = 1, limit = 10, search = "", salesmanId } = req.query;
-    console.log("req.query:", req.query);
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
@@ -363,7 +362,6 @@ export const updatePhoneNumber = async (req, res) => {
     const userId = req.user?._id; 
     const { phoneNumber } = req.body;
 
-    console.log("Received phone number:", req.body);
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized access." });

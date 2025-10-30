@@ -114,8 +114,7 @@ export const makeConnection = async (req, res) => {
       notes,
     } = req.body;
 
-    // For debugging, log the actual request body
-    console.log("Request Body Received:", req.body);
+
 
     if (!viewId || !fullName || !email || !phoneNumber) {
       return res.status(400).json({
@@ -184,8 +183,7 @@ export const updateConnectionLabel = async (req, res) => {
     const { connectionId } = req.query;
     const { label } = req.body;
 
-    console.log("label", label);
-    console.log("connectionId", connectionId);
+
 
     if (label === undefined) {
       return res.status(400).json({

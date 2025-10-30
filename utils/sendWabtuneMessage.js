@@ -21,11 +21,6 @@ export async function sendWhatsAppTemplateMessage(
 
     const indianNumber = phoneNumber;
 
-    // console.log("Sending WhatsApp message to:", indianNumber);
-    // console.log("Using templateId and mediaUrl:", templateId, mediaUrl);
-    // console.log("Api token:", apiToken);
-    // console.log("PhoneNumberId:", phoneNumberId);
-    // console.log("Base url:", baseUrl);
 
     const getSubscriberUrl = `${baseUrl}subscriber/get`;
     const createSubscriberUrl = `${baseUrl}subscriber/create`;

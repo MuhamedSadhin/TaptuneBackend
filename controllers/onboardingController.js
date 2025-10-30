@@ -15,7 +15,6 @@ export const createOnboarding = async (req, res) => {
       heardAboutTapTune,
     } = req.body;
 
-    console.log("📥 Received onboarding data:", req.body);
 
     const userId = req.user?._id || req.userId;
     if (!userId) {
@@ -53,7 +52,6 @@ export const createOnboarding = async (req, res) => {
     });
 
     await newOnboarding.save();
-    console.log("✅ Onboarding data saved:", newOnboarding._id);
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
@@ -64,11 +62,6 @@ export const createOnboarding = async (req, res) => {
       { new: true }
     );
 
-    if (!updatedUser) {
-      console.warn("⚠️ User not found while updating onboarding status");
-    } else {
-      console.log("👤 User onboarding marked as completed:", updatedUser._id);
-    }
 
     res.status(201).json({
       success: true,

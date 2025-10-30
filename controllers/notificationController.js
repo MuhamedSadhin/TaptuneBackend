@@ -1,7 +1,6 @@
 import notificationSchema from "../models/notificationSchema.js";
 
 export const getNotifications = async (req, res) => {
-  console.log("Fetching notifications for user:", req.user);
   try {
     const loggedInUserId = req.user?.id; 
     const isAdmin = req.user?.role === "admin" || req.user?.role === "Admin"; 
