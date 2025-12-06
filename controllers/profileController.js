@@ -315,7 +315,6 @@ export async function transferProfileToUser(req, res) {
   session.startTransaction();
 
   const { profileId, userId } = req.body;
-  console.log("Transfer request body:", req.body);
 
   try {
     if (!profileId || !userId) {
@@ -325,7 +324,6 @@ export async function transferProfileToUser(req, res) {
       });
     }
 
-    // Check if user exists
     const user = await User.findById(userId).session(session);
     if (!user) {
       return res.status(404).json({
@@ -334,7 +332,6 @@ export async function transferProfileToUser(req, res) {
       });
     }
 
-    // Find profile
     const profile = await Profile.findById(profileId).session(session);
     if (!profile) {
       return res.status(404).json({
@@ -342,23 +339,33 @@ export async function transferProfileToUser(req, res) {
         message: "Profile not found.",
       });
     }
-    const cardOrder = await CardOrder.findById(profile.cardOrderId).session(session);
 
+    const cardOrder = await CardOrder.findById(profile.cardOrderId).session(
+      session
+    );
     if (!cardOrder) {
       return res.status(404).json({
         success: false,
         message: "Associated Card Order not found.",
       });
     }
-     
+
+    // 🔄 Transfer card order
     cardOrder.userId = userId;
     await cardOrder.save({ session });
 
-    // Update profile's userId
+    // 🔄 Transfer profile
     profile.userId = userId;
     await profile.save({ session });
 
-    // Update user's isOrdered
+    // 🔄 Transfer ALL leads under this profile
+    await Connect.updateMany(
+      { profileId: profileId },
+      { $set: { userId: userId } },
+      { session }
+    );
+
+    // Update user flag
     user.isOrdered = true;
     await user.save({ session });
 
@@ -366,25 +373,20 @@ export async function transferProfileToUser(req, res) {
     await session.commitTransaction();
     session.endSession();
 
-    console.log("User updated:", user);
-    console.log("Profile updated:", profile);
-
-    // Send success response
     return res.status(200).json({
       success: true,
-      message: "Profile user transferred successfully.",
+      message: "Profile, card order, and leads transferred successfully.",
       profile,
       user,
     });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    console.error("Transfer profile transaction error:", error);
 
     return res.status(500).json({
       success: false,
       message: "Internal Server Error.",
-      error: error.message || error,
+      error: error.message,
     });
   }
 }
