@@ -117,10 +117,10 @@ export const makeConnection = async (req, res) => {
     // For debugging, log the actual request body
     console.log("Request Body Received:", req.body);
 
-    if (!viewId || !fullName || !email || !phoneNumber) {
+    if (!viewId || !fullName || !phoneNumber) {
       return res.status(400).json({
         success: false,
-        message: "viewId, fullName, email, and phoneNumber are required.",
+        message: "viewId, fullName, and phoneNumber are required.",
       });
     }
 
@@ -156,7 +156,8 @@ export const makeConnection = async (req, res) => {
       connectionDetails: newConnection, // The data that was just saved
       profileDetails: {
         fullName: profile.fullName, // The full name from the connected profile
-        email: profile.email, // The email from the connected profile
+        ...(profile.email && { email: profile.email }),
+        ...(profile.phoneNumber && { phoneNumber: profile.phoneNumber }),
       },
     };
         await notificationSchema.create({
@@ -164,7 +165,7 @@ export const makeConnection = async (req, res) => {
           name: fullName, 
           email,
           userId: profile.userId, 
-          content: `${fullName}- (${email}) has connected with your profile.`,
+          content: `${fullName}- (${email?email:phoneNumber}) has connected with your profile.`,
           type: "connection",
           relatedId: newConnection._id,
         });

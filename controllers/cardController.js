@@ -404,6 +404,7 @@ export const CreateProfileByAdmin = async (req, res) => {
       whatsappNumber: whatsappNumber || "",
       bio: bio || "",
       isActive: false,
+      isAdminCreated:true,
     });
 
     // 🔗 Link profile to order

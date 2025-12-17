@@ -36,6 +36,10 @@ const profileSchema = new mongoose.Schema(
         link: { type: String, trim: true },
       },
     ],
+    isAdminCreated: {
+      type: Boolean,
+      default: false,
+    }
   },
   { timestamps: true }
 );

@@ -12,12 +12,16 @@ export const viewAllProfileOfAUser = async (req, res) => {
           throw new Error("Unauthorized: No user logged in");
         }
 
-        const profile = await Profile.find({ userId })
-          .populate({
-            path: "cardOrderId", 
-            model: CardOrder,
-          })
-        .lean();
+const profile = await Profile.find({
+  userId,
+  isAdminCreated: { $ne: true },
+})
+  .populate({
+    path: "cardOrderId",
+    model: CardOrder,
+  })
+  .lean();
+
 
         if (!profile) {
           res.status(404);
@@ -40,18 +44,26 @@ export const viewProfileByTap = async (req, res) => {
   try {
     const { viewId } = req.params;
 
+    if (!viewId) {
+      return res.status(400).json({
+        success: false,
+        message: "viewId is required",
+        status: 400,
+      });
+    }
+
     const profile = await Profile.findOne({ viewId })
       .populate({
         path: "userId",
-        select: "name email role", 
+        select: "name email role referalCode",
       })
       .lean();
-    console.log("profile view ", profile);
+
     if (!profile) {
       return res.status(404).json({
         success: false,
         message: "Profile not found",
-        status: 404
+        status: 404,
       });
     }
 
@@ -59,24 +71,32 @@ export const viewProfileByTap = async (req, res) => {
       return res.status(403).json({
         success: false,
         message: "Profile not activated",
-        data:profile,
-        status: 403
+        data: profile,
+        status: 403,
       });
     }
+
+  
+    if (profile.userId?.role === "sales") {
+      profile.referalCode = profile.userId.referalCode || null;
+    }
+
 
     return res.status(200).json({
       success: true,
       data: profile,
-      status: 200
-    })
+      status: 200,
+    });
   } catch (error) {
     console.error("Error fetching profile by viewId:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Server error while fetching profile",
+      status: 500,
     });
   }
 };
+
 
 
 export const editProfile = async (req, res) => {
@@ -237,7 +257,6 @@ export const getProfilesCreatedByAdmin = async (req, res) => {
   try {
     const loggedInUser = req.user;
     const userRole = (loggedInUser.role || "").toLowerCase();
-
     let creatorIds = [];
 
     if (userRole === "admin") {
@@ -254,7 +273,10 @@ export const getProfilesCreatedByAdmin = async (req, res) => {
       });
     }
 
-    const profiles = await Profile.find({ userId: { $in: creatorIds } })
+    const profiles = await Profile.find({
+      userId: { $in: creatorIds },
+      isAdminCreated: true,
+    })
       .sort({ createdAt: -1 })
       .lean();
 
