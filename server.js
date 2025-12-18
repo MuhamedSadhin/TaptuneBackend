@@ -16,6 +16,7 @@ import notificationRoutes from "./routes/notificationRoute.js"
 import OnboardingRoute from "./routes/onboardingRoutes.js";
 import connectDB from "./config/db.js";
 import SalesRoute from "./routes/salesRoute.js"
+import reviewCard from "./routes/reviewCardRoutes.js"
 // import convertLogicRoutes from "./DBLogic/convertLogic.js";
 
 const app = express();
@@ -67,7 +68,8 @@ app.use("/api/enquiry", enquiryRoutes);
 app.use("/api/wabtune", wabtuneRoutes)
 app.use("/api/notification", notificationRoutes);
 app.use("/api/onboarding", OnboardingRoute);
-app.use("/api/sales",SalesRoute)
+app.use("/api/sales", SalesRoute)
+app.use("/api/reviewCard", reviewCard);
 app.use("/", (req, res) => {
   res.send("API not matching!");
 })
