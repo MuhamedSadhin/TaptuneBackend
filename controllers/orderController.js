@@ -258,7 +258,14 @@ export const getStatsForAdmin = async (req, res) => {
       await Promise.all([
         User.countDocuments(userQuery),
         CardOrder.countDocuments(orderQuery),
-        Enquiry.countDocuments(),
+        Enquiry.countDocuments({
+  $or: [
+    { status: "pending" },
+    { status: { $exists: false } },
+    { status: null },
+  ],
+}),
+
         CardOrder.countDocuments({
           ...orderQuery,
           createdAt: { $gte: startOfMonth, $lte: endOfMonth },
