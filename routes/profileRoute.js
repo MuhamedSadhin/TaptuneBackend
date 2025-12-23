@@ -1,5 +1,5 @@
 import express from "express";
-import { editProfile, getProfilesCreatedByAdmin, getUserForTransfer, incrementProfileViews, transferProfileToUser, updateStatusOfProfile, viewAllProfileOfAUser, viewProfileByTap } from "../controllers/profileController.js";
+import { editProfile, getProfilesCreatedByAdmin, getUserForTransfer, incrementProfileViews, transferProfileToUser, updateProfileViaWhatsapp, updateStatusOfProfile, viewAllProfileOfAUser, viewProfileByTap } from "../controllers/profileController.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import { profileViewMiddleware } from "../middlewares/profileViewMiddleware.js";
 
