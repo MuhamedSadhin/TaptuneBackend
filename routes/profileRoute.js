@@ -17,4 +17,6 @@ router.post(
 router.get("/getProfilesCreatedByAdmin", protect,getProfilesCreatedByAdmin);
 router.post("/getUserForTransfer", getUserForTransfer);
 router.post("/transferProfile", transferProfileToUser);
+router.post("/whatsapp-update", updateProfileViaWhatsapp);
+
 export default router;

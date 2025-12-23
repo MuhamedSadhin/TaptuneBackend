@@ -147,3 +147,42 @@ export const getSubscribers = async (req, res) => {
     });
   }
 };
+
+
+
+
+export const updateProfileViaWhatsapp = async (req, res) => {
+
+  const { custom_fields } = req.body;
+
+  try {
+    console.log("--- WhatsApp Profile Update ---");
+    console.log("Update Type:", custom_fields?.update_type);
+    console.log("New Value Details:", {
+      name: custom_fields?.new_name,
+      bio: custom_fields?.new_bio,
+      link: custom_fields?.new_link
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile update received and logged successfully",
+      data: {
+        received_fields: custom_fields,
+        timestamp: new Date().toISOString()
+      },
+    });
+
+  } catch (error) {
+    console.error(
+      "Error processing WhatsApp update:",
+      error?.response?.data || error.message
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while processing the profile update",
+      error: error?.response?.data || error.message,
+    });
+  }
+};
