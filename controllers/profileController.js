@@ -434,9 +434,13 @@ export const updateProfileViaWhatsapp = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Profile update received and logged successfully",
+      reply: {
+        type: "text",
+        message: "Profile updated successfully.",
+      },
       data: {
         received_fields: custom_fields,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
     });
 
@@ -448,6 +452,12 @@ export const updateProfileViaWhatsapp = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+        reply: {
+    type: "text",
+    message:
+      "⚠️ Something went wrong while processing your request.\n\n" +
+      "Please try again later or contact support."
+  },
       message: "An error occurred while processing the profile update",
       error: error?.response?.data || error.message,
     });
