@@ -474,7 +474,7 @@ export async function transferProfileToUser(req, res) {
 export const updateProfileViaWhatsapp = async (req, res) => {
   try {
     const { phone, fullName, bio, designation, brandName, email } = req.body;
-
+    console.log("Received WhatsApp profile update request:", req.body);
     if (!phone) {
       return res.status(400).json({
         success: false,
