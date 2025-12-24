@@ -189,7 +189,7 @@ export const updateProfileViaWhatsapp = async (req, res) => {
     return res.status(200).json({
       success: true,
       status: "updated",
-      message: "Profile updated successfully",
+      message: "Profile updated successfully ✅",
     });
   } catch (error) {
     console.error("WhatsApp profile update error:", error);
