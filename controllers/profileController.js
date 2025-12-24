@@ -418,48 +418,107 @@ export async function transferProfileToUser(req, res) {
 
 
 
+// export const updateProfileViaWhatsapp = async (req, res) => {
+
+//   const { custom_fields } = req.body;
+
+//   try {
+//     console.log("--- WhatsApp Profile Update ---");
+//     console.log("Req body :", req.body)
+//     console.log("New Value Details:", {
+//       name: custom_fields?.new_name,
+//       bio: custom_fields?.new_bio,
+//       link: custom_fields?.new_link
+//     });
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Profile update received and logged successfully",
+//       reply: {
+//         type: "text",
+//         message: "Profile updated successfully.",
+//       },
+//       data: {
+//         received_fields: custom_fields,
+//         timestamp: new Date().toISOString(),
+//       },
+//     });
+
+//   } catch (error) {
+//     console.error(
+//       "Error processing WhatsApp update:",
+//       error?.response?.data || error.message
+//     );
+
+//     return res.status(500).json({
+//       success: false,
+//         reply: {
+//     type: "text",
+//     message:
+//       "⚠️ Something went wrong while processing your request.\n\n" +
+//       "Please try again later or contact support."
+//   },
+//       message: "An error occurred while processing the profile update",
+//       error: error?.response?.data || error.message,
+//     });
+//   }
+// };
+
+
+
+
+
+
+
+
 export const updateProfileViaWhatsapp = async (req, res) => {
-
-  const { custom_fields } = req.body;
-
   try {
-    console.log("--- WhatsApp Profile Update ---");
-    console.log("Req body :", req.body)
-    console.log("New Value Details:", {
-      name: custom_fields?.new_name,
-      bio: custom_fields?.new_bio,
-      link: custom_fields?.new_link
-    }); 
+    const { phone, fullName, bio, designation, brandName, email } = req.body;
 
-    return res.status(200).json({
-      success: true,
-      message: "Profile update received and logged successfully",
-      reply: {
-        type: "text",
-        message: "Profile updated successfully.",
-      },
-      data: {
-        received_fields: custom_fields,
-        timestamp: new Date().toISOString(),
-      },
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        status: "missing_phone",
+        message: "Phone number is required",
+      });
+    }
+
+    const profile = await Profile.findOne({
+      $or: [{ phoneNumber: phone }, { watsappNumber: phone }],
     });
 
+    if (!profile) {
+      console.log("No profile found for phone number: ❗❗❗", phone);
+      return res.status(200).json({
+        success: false,
+        status: "not_found",
+        message: "No profile found for this phone number",
+      });
+    }
+
+    // 4️⃣ Update only provided fields
+    if (fullName) profile.fullName = fullName;
+    if (bio) profile.bio = bio;
+    if (designation) profile.designation = designation;
+    if (brandName) profile.brandName = brandName;
+    if(email) profile.email = email;
+
+    await profile.save();
+
+    // 5️⃣ Success response (BotSailor friendly)
+    console.log("Profile updated for phone number: ✅✅✅", phone);
+    return res.status(200).json({
+      success: true,
+      status: "updated",
+      message: "Profile updated successfully ✅",
+    });
   } catch (error) {
-    console.error(
-      "Error processing WhatsApp update:",
-      error?.response?.data || error.message
-    );
+    console.error("WhatsApp profile update error:", error);
 
     return res.status(500).json({
       success: false,
-        reply: {
-    type: "text",
-    message:
-      "⚠️ Something went wrong while processing your request.\n\n" +
-      "Please try again later or contact support."
-  },
-      message: "An error occurred while processing the profile update",
-      error: error?.response?.data || error.message,
+      status: "error",
+      message: "Internal server error",
     });
   }
 };
