@@ -424,12 +424,12 @@ export const updateProfileViaWhatsapp = async (req, res) => {
 
   try {
     console.log("--- WhatsApp Profile Update ---");
-    console.log("Update Type:", custom_fields?.update_type);
+    console.log("Req body :", req.body)
     console.log("New Value Details:", {
       name: custom_fields?.new_name,
       bio: custom_fields?.new_bio,
       link: custom_fields?.new_link
-    });
+    }); 
 
     return res.status(200).json({
       success: true,
