@@ -473,7 +473,8 @@ export async function transferProfileToUser(req, res) {
 
 export const updateProfileViaWhatsapp = async (req, res) => {
   try {
-    const { phone, fullName, bio, designation, brandName, email } = req.body;
+    const { phone, fullName, bio, designation, brandName, email, profilePic } =
+      req.body;
     console.log("Received WhatsApp profile update request:", req.body);
     if (!phone) {
       return res.status(400).json({
@@ -501,8 +502,9 @@ export const updateProfileViaWhatsapp = async (req, res) => {
     if (bio) profile.bio = bio;
     if (designation) profile.designation = designation;
     if (brandName) profile.brandName = brandName;
-    if(email) profile.email = email;
-
+    if (email) profile.email = email;
+    if (profilePic) profile.profilePic = profilePic;
+    
     await profile.save();
 
     // 5️⃣ Success response (BotSailor friendly)
