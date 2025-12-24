@@ -169,6 +169,7 @@ export const updateProfileViaWhatsapp = async (req, res) => {
     });
 
     if (!profile) {
+      console.log("No profile found for phone number: ❗❗❗", phone);
       return res.status(200).json({
         success: false,
         status: "not_found",
@@ -186,6 +187,7 @@ export const updateProfileViaWhatsapp = async (req, res) => {
     await profile.save();
 
     // 5️⃣ Success response (BotSailor friendly)
+    console.log("Profile updated for phone number: ✅✅✅", phone);
     return res.status(200).json({
       success: true,
       status: "updated",
