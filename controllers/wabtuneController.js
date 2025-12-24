@@ -1,5 +1,6 @@
 import axios from "axios";
 import dotenv from "dotenv";
+import Profile from "../models/profileSchema.js";
 dotenv.config();
 
 const apiToken = process.env.WHATSAPP_API;
@@ -152,37 +153,51 @@ export const getSubscribers = async (req, res) => {
 
 
 export const updateProfileViaWhatsapp = async (req, res) => {
-
-  const { custom_fields } = req.body;
-
   try {
-    console.log("--- WhatsApp Profile Update ---");
-    console.log("Update Type:", custom_fields?.update_type);
-    console.log("New Value Details:", {
-      name: custom_fields?.new_name,
-      bio: custom_fields?.new_bio,
-      link: custom_fields?.new_link
+    const { phone, fullName, bio, designation, brandName, email } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({
+        success: false,
+        status: "missing_phone",
+        message: "Phone number is required",
+      });
+    }
+
+    const profile = await Profile.findOne({
+      $or: [{ phoneNumber: phone }, { watsappNumber: phone }],
     });
 
+    if (!profile) {
+      return res.status(200).json({
+        success: false,
+        status: "not_found",
+        message: "No profile found for this phone number",
+      });
+    }
+
+    // 4️⃣ Update only provided fields
+    if (fullName) profile.fullName = fullName;
+    if (bio) profile.bio = bio;
+    if (designation) profile.designation = designation;
+    if (brandName) profile.brandName = brandName;
+    if(email) profile.email = email;
+
+    await profile.save();
+
+    // 5️⃣ Success response (BotSailor friendly)
     return res.status(200).json({
       success: true,
-      message: "Profile update received and logged successfully",
-      data: {
-        received_fields: custom_fields,
-        timestamp: new Date().toISOString()
-      },
+      status: "updated",
+      message: "Profile updated successfully",
     });
-
   } catch (error) {
-    console.error(
-      "Error processing WhatsApp update:",
-      error?.response?.data || error.message
-    );
+    console.error("WhatsApp profile update error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "An error occurred while processing the profile update",
-      error: error?.response?.data || error.message,
+      status: "error",
+      message: "Internal server error",
     });
   }
 };
