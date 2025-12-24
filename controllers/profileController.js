@@ -504,7 +504,7 @@ export const updateProfileViaWhatsapp = async (req, res) => {
     if (brandName) profile.brandName = brandName;
     if (email) profile.email = email;
     if (profilePic) profile.profilePic = profilePic;
-    
+
     await profile.save();
 
     // 5️⃣ Success response (BotSailor friendly)
@@ -513,6 +513,7 @@ export const updateProfileViaWhatsapp = async (req, res) => {
       success: true,
       status: "updated",
       message: "Profile updated successfully ✅",
+      viewId: profile.viewId,
     });
   } catch (error) {
     console.error("WhatsApp profile update error:", error);
