@@ -7,13 +7,34 @@ export const decryptRequest = (body, privateKeyPem) => {
   console.log("➡️ decryptRequest() CALLED");
 
   try {
+    if (!privateKeyPem) {
+      throw new Error("Private key is undefined");
+    }
+    privateKeyPem = privateKeyPem.replace(/\\n/g, "\n");
+    console.log("📜 Private key provided:",privateKeyPem);
+    console.log("🔑 Private key length:", privateKeyPem.length);
+    console.log("🔑 Private key starts with:", privateKeyPem.slice(0, 30));
+    console.log("🔑 Private key ends with:", privateKeyPem.slice(-30));
+
+    if (
+      !privateKeyPem.includes("-----BEGIN PRIVATE KEY-----") ||
+      !privateKeyPem.includes("-----END PRIVATE KEY-----")
+    ) {
+      throw new Error("Invalid private key format (PEM boundary missing)");
+    }
+
+    /* --------------------------------------------------
+       📦 PAYLOAD DIAGNOSTICS
+    -------------------------------------------------- */
     const { encrypted_aes_key, encrypted_flow_data, initial_vector } = body;
 
     console.log("🔑 encrypted_aes_key length:", encrypted_aes_key?.length);
     console.log("📦 encrypted_flow_data length:", encrypted_flow_data?.length);
     console.log("🧭 initial_vector length:", initial_vector?.length);
 
-    /* ---------- RSA DECRYPT ---------- */
+    /* --------------------------------------------------
+       🔐 RSA DECRYPT (OAEP + SHA-256)
+    -------------------------------------------------- */
     let aesKey;
     try {
       aesKey = crypto.privateDecrypt(
@@ -37,7 +58,9 @@ export const decryptRequest = (body, privateKeyPem) => {
       throw new Error(`Invalid AES key length: ${aesKey.length}`);
     }
 
-    /* ---------- AES DECRYPT ---------- */
+    /* --------------------------------------------------
+       🔓 AES-GCM DECRYPT
+    -------------------------------------------------- */
     const iv = Buffer.from(initial_vector, "base64");
     console.log("🧭 IV length:", iv.length);
 
@@ -61,7 +84,6 @@ export const decryptRequest = (body, privateKeyPem) => {
     try {
       const decipher = crypto.createDecipheriv("aes-128-gcm", aesKey, iv);
 
-      // IMPORTANT: Explicit empty AAD
       decipher.setAAD(Buffer.alloc(0));
       decipher.setAuthTag(tag);
 
@@ -88,6 +110,12 @@ export const decryptRequest = (body, privateKeyPem) => {
     throw err;
   }
 };
+
+
+
+
+
+
 
 /**
  * Encrypt response payload
