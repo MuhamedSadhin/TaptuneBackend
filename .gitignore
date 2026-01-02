@@ -3,3 +3,4 @@ node_modules
 serviceAccountKey.json
 firebaseDB/
 DBLogic/
+utils/firebase/firebaseserviceaccount.json

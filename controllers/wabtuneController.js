@@ -1,6 +1,10 @@
 import axios from "axios";
 import dotenv from "dotenv";
 import Profile from "../models/profileSchema.js";
+import flowSessionSchema from "../models/flowSessionSchema.js";
+import { sendEditProfileFlow } from "../utils/handler/sendEditProfileFlow.js";
+import { sendSignUpFlow } from "../utils/handler/sendSIgnUpFlow.js";
+import { sendOrderFlow } from "../utils/handler/sendCardOrderFlow.js";
 dotenv.config();
 
 const apiToken = process.env.WHATSAPP_API;
@@ -203,3 +207,120 @@ export const updateProfileViaWhatsapp = async (req, res) => {
     });
   }
 };
+
+
+
+export const verifyWhatsappWebhook = async (req, res) => {
+  try {
+    const VERIFY_TOKEN = "my_verify_token_123"; // same as Meta dashboard
+
+    const mode = req.query["hub.mode"];
+    const token = req.query["hub.verify_token"];
+    const challenge = req.query["hub.challenge"];
+
+    if (mode === "subscribe" && token === VERIFY_TOKEN) {
+      console.log("✅ WhatsApp webhook verified");
+
+      return res.status(200).send(challenge);
+    }
+
+    console.log("❌ Webhook verification failed");
+
+    return res.status(403).json({
+      success: false,
+      status: "verification_failed",
+      message: "Webhook verification failed",
+    });
+  } catch (error) {
+    console.error("🔥 Webhook verification error:", error);
+
+    return res.status(500).json({
+      success: false,
+      status: "server_error",
+      message: "Internal server error",
+    });
+  }
+};
+
+export const whatsappWebhookHandler = async (req, res) => {
+  try {
+    const entry = req.body?.entry?.[0];
+    const value = entry?.changes?.[0]?.value;
+
+    if (!value || value.statuses) return res.sendStatus(200);
+
+    const message = value.messages?.[0];
+    const waId = value.contacts?.[0]?.wa_id;
+
+    if (!message || !waId) return res.sendStatus(200);
+
+    console.log(`📩 Incoming ${message.type} from ${waId}`);
+
+    if (message.type === "text" || message.type === "button") {
+      let text = "";
+      console.log(
+        "message :",message
+      )
+      if (message.type === "text") {
+        text = message.text?.body.toLowerCase();
+      } else if (message.type === "button") {
+        // Check payload first (ID), then text (Display)
+        text = message.button?.text.toLowerCase(); 
+      }
+
+      console.log(`💬 Message text: "${text}"`);
+
+      await flowSessionSchema.findOneAndUpdate(
+        { whatsappNumber: waId },
+        {
+          whatsappNumber: waId,
+          lastUserMessageAt: new Date(),
+        },
+        { upsert: true }
+      );
+
+      if (
+        [
+          "signup",
+          "create account",
+          "join",
+          "register",
+          "start",
+          "hi",
+          "hello",
+        ].includes(text)
+      ) {
+        console.log(`🚀 Triggering Sign Up Flow for ${waId}`);
+        await sendSignUpFlow(waId);
+      } else if (
+        ["edit profile", "update profile", "change details", "edit"].includes(
+          text
+        )
+      ) {
+        console.log(`✏️ Triggering Edit Profile Flow for ${waId}`);
+        await sendEditProfileFlow(waId);
+      } else if (
+        [
+          "setup profile",
+          "buy",
+          "card",
+          "shop",
+          "purchase",
+          "new card",
+        ].includes(text)
+      ) {
+        console.log(`💳 Triggering Order Flow for ${waId}`);
+        await sendOrderFlow(waId);
+      }
+
+      return res.sendStatus(200);
+    }
+
+    return res.sendStatus(200);
+  } catch (error) {
+    console.error("🔥 Webhook error:", error);
+    return res.sendStatus(200);
+  }
+};
+
+

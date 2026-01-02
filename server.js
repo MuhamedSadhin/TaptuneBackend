@@ -17,6 +17,7 @@ import OnboardingRoute from "./routes/onboardingRoutes.js";
 import connectDB from "./config/db.js";
 import SalesRoute from "./routes/salesRoute.js"
 import reviewCard from "./routes/reviewCardRoutes.js"
+import whatsappApi from "./routes/whatsappApiRoute.js"
 // import convertLogicRoutes from "./DBLogic/convertLogic.js";
 
 const app = express();
@@ -70,6 +71,7 @@ app.use("/api/notification", notificationRoutes);
 app.use("/api/onboarding", OnboardingRoute);
 app.use("/api/sales", SalesRoute)
 app.use("/api/reviewCard", reviewCard);
+app.use("/api/whatsappApi", whatsappApi);
 app.use("/", (req, res) => {
   res.send("API not matching!");
 })

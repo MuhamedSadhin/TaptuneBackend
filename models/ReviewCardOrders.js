@@ -2,21 +2,18 @@ import mongoose from "mongoose";
 
 const reviewCardOrderSchema = new mongoose.Schema(
   {
-    /* -------- USER -------- */
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    /* -------- CARD -------- */
     cardId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Card", // or CardOrder / CardProduct (use your actual model)
+      ref: "Card", 
       required: true,
     },
 
-    /* -------- REVIEW CARD DATA -------- */
     brandName: {
       type: String,
       required: true,

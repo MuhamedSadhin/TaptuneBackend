@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 import Connect from "../models/connectSchema.js";
 import Profile from "../models/profileSchema.js";
 import notificationSchema from "../models/notificationSchema.js";
+import { sendWelcomeTemplate } from "../utils/sendWhatsTempMessages.js";
+import User from "../models/userSchema.js";
 
 
 export const viewAllConnections = async (req, res) => {
@@ -114,7 +116,6 @@ export const makeConnection = async (req, res) => {
       notes,
     } = req.body;
 
-    // For debugging, log the actual request body
     console.log("Request Body Received:", req.body);
 
     if (!viewId || !fullName || !phoneNumber) {
@@ -124,7 +125,13 @@ export const makeConnection = async (req, res) => {
       });
     }
 
-    const profile = await Profile.findOne({ viewId }).lean();
+    /* --------------------------------------------------
+       1️⃣ FIND PROFILE
+    -------------------------------------------------- */
+    const profile = await Profile.findOne(
+      { viewId },
+      { userId: 1, fullName: 1, email: 1, phoneNumber: 1 }
+    ).lean();
 
     if (!profile) {
       return res.status(404).json({
@@ -133,7 +140,22 @@ export const makeConnection = async (req, res) => {
       });
     }
 
-    const newConnectionData = {
+    /* --------------------------------------------------
+       2️⃣ FIND USER (ROLE SOURCE)
+    -------------------------------------------------- */
+    const user = await User.findById(profile.userId, { role: 1 }).lean();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found for this profile",
+      });
+    }
+
+    /* --------------------------------------------------
+       3️⃣ CREATE CONNECTION
+    -------------------------------------------------- */
+    const newConnection = await Connect.create({
       userId: profile.userId,
       profileId: profile._id,
       fullName,
@@ -146,40 +168,68 @@ export const makeConnection = async (req, res) => {
       businessCategory,
       businessAddress,
       notes,
-    };
+    });
 
-    // Create the connection and get the newly created document back
-    const newConnection = await Connect.create(newConnectionData);
+    /* --------------------------------------------------
+       4️⃣ CREATE NOTIFICATION
+    -------------------------------------------------- */
+    await notificationSchema.create({
+      title: "New Connection Made!",
+      name: fullName,
+      email,
+      userId: profile.userId,
+      content: `${fullName} (${
+        email || phoneNumber
+      }) has connected with your profile.`,
+      type: "connection",
+      relatedId: newConnection._id,
+    });
 
-    // Construct the new response data as requested
-    const responseData = {
-      connectionDetails: newConnection, // The data that was just saved
-      profileDetails: {
-        fullName: profile.fullName, // The full name from the connected profile
-        ...(profile.email && { email: profile.email }),
-        ...(profile.phoneNumber && { phoneNumber: profile.phoneNumber }),
-      },
-    };
-        await notificationSchema.create({
-          title: " New Connection Made! 🤝",
-          name: fullName, 
-          email,
-          userId: profile.userId, 
-          content: `${fullName}- (${email?email:phoneNumber}) has connected with your profile.`,
-          type: "connection",
-          relatedId: newConnection._id,
-        });
+    /* --------------------------------------------------
+       5️⃣ SEND WHATSAPP (ROLE CHECK FROM USER)
+    -------------------------------------------------- */
+    const allowedRoles = ["sales", "admin"];
+    console.log("user role:", user.role);
 
+    if (allowedRoles.includes(user.role)) {
+      await sendWelcomeTemplate({
+        to: phoneNumber,
+        firstName: fullName,
+      });
+    }
+
+    /* --------------------------------------------------
+       6️⃣ RESPONSE
+    -------------------------------------------------- */
     return res.status(201).json({
       success: true,
       message: "Connection made successfully",
-      data: responseData,
+      data: {
+        connectionDetails: newConnection,
+        profileDetails: {
+          fullName: profile.fullName,
+          ...(profile.email && { email: profile.email }),
+          ...(profile.phoneNumber && { phoneNumber: profile.phoneNumber }),
+        },
+      },
     });
   } catch (err) {
     console.error("Connect error:", err);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
+
+
+
+
+
+
+
+
+
 export const updateConnectionLabel = async (req, res) => {
   try {
     const { connectionId } = req.query;
