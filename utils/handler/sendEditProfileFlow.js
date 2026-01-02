@@ -37,7 +37,7 @@ export const sendEditProfileFlow = async (whatsappNumber) => {
           header: {
             type: "image",
             image: {
-              link: "https://imgs.search.brave.com/Dr6sPfiVOu-GWlJKVbdmKXOQyCd06lcKe4xRbbmXRL8/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9tZWRp/YS5nZXR0eWltYWdl/cy5jb20vaWQvMTAx/OTg5NjIzNC9waG90/by9wcm9maWxlLXNo/b3Qtb2YtYmVhdXRp/ZnVsLXlvdW5nLW1h/bi1zaG90LW9uLXN0/dWRpby5qcGc_cz02/MTJ4NjEyJnc9MCZr/PTIwJmM9azBzRWlU/NkhRUjFHcXFtamlS/czlLby1fVm91aFFw/WnRJeU9VSjRDODVm/WT0",
+              link: "https://i.ibb.co/CKnVNqFd/you.png",
             },
           },
           body: {

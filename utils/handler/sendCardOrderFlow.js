@@ -5,9 +5,7 @@ import flowSessionSchema from "../../models/flowSessionSchema.js";
 const WHATSAPP_API_URL = `https://graph.facebook.com/v19.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
 
 // 📸 Image: A sleek hand holding a business card (Perfect for "Order Card")
-const ORDER_FLOW_IMAGE_URL =
-  "https://images.unsplash.com/photo-1616469829941-c7200edec809?q=80&w=1000&auto=format&fit=crop";
-
+const ORDER_FLOW_IMAGE_URL = "https://i.ibb.co/ksHDTNds/and.png";
 export const sendOrderFlow = async (whatsappNumber) => {
   try {
     // 1. Validate Flow ID

@@ -300,18 +300,26 @@ export const profileEditWithImage = async (req, res) => {
     }
 
     /* ---------------- FLOW EXIT (SEND TEMPLATE HERE) ---------------- */
+    /* ---------------- FLOW EXIT (SEND TEMPLATE HERE) ---------------- */
     if (screen === "SUCCESS_SCREEN" && action === "data_exchange") {
       if (data.next_action === "FLOW_EXIT") {
-        // 🔔 SEND PROFILE UPDATED TEMPLATE
-        await sendProfileUpdatedTemplate({
-          phoneNumber: whatsappNumber,
-          fullName: profile.fullName,
-          profileViewId: profile.viewId,
-        });
+        // ⏱️ Delay template send by 3 seconds (NON-BLOCKING)
+        setTimeout(async () => {
+          try {
+            await sendProfileUpdatedTemplate({
+              phoneNumber: whatsappNumber,
+              fullName: profile.fullName,
+              profileViewId: profile.viewId,
+            });
+          } catch (err) {
+            console.error("Delayed template send failed:", err);
+          }
+        }, 3000); // 3000 ms = 3 seconds
 
-        // Optional: clean session
+        // 🧹 Clean session immediately
         await flowSessionSchema.deleteOne({ flowToken: flow_token });
 
+        // 🚀 Respond to WhatsApp Flow immediately
         return res
           .status(200)
           .send(encryptResponse({ screen: "FLOW_EXIT", data: {} }, aesKey, iv));

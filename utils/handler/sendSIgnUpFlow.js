@@ -6,8 +6,7 @@ const WHATSAPP_API_URL = `https://graph.facebook.com/v19.0/${process.env.WHATSAP
 
 // You can replace this with your uploaded media ID or a public URL
 const WELCOME_IMAGE_URL =
-  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=1000&auto=format&fit=crop";
-
+  "https://i.ibb.co/v4rtD0Ty/Gemini-Generated-Image-13u6id13u6id13u6.png";
 export const sendSignUpFlow = async (whatsappNumber) => {
   try {
     // 1. Validate Flow ID

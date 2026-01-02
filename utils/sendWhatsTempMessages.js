@@ -22,7 +22,7 @@ export const sendProfileUpdatedTemplate = async ({
                 {
                   type: "image",
                   image: {
-                    link: "https://imgs.search.brave.com/zyFtDdKt80WDlDUbnj16g3BHLRi-ChZzyQBpFBPQ72c/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9wYXN0/YXRpYy5waWNzYXJ0/LmNvbS9jbXMtcGFz/dGF0aWMvY2ZmY2Q1/NmUtNTMxNy00YWRi/LWIyYTItOGU4YWIy/N2MwMTk0LnBuZw",
+                    link: "https://i.ibb.co/nqHffPS1/Gemini-Generated-Image-58pr9f58pr9f58pr.png",
                   },
                 },
               ],
