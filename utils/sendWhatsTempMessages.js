@@ -22,7 +22,7 @@ export const sendProfileUpdatedTemplate = async ({
                 {
                   type: "image",
                   image: {
-                    link: "https://i.ibb.co/nqHffPS1/Gemini-Generated-Image-58pr9f58pr9f58pr.png",
+                    link: "https://i.ibb.co/35049q3L/Gemini-Generated-Image-58pr9f58pr9f58pr.png",
                   },
                 },
               ],
@@ -79,7 +79,7 @@ export const sendWelcomeTemplate = async ({ to, firstName }) => {
                 {
                   type: "image",
                   image: {
-                    link: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f",
+                    link: "https://i.ibb.co/fG09vR7M/Gemini-Generated-Image-chks6cchks6cchks-1.png",
                   },
                 },
               ],
