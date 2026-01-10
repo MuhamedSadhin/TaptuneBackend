@@ -26,6 +26,28 @@ const cardOrderSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    deliveryAddress: {
+      houseName: {
+        type: String,
+        trim: true,
+      }, 
+      landmark: {
+        type: String,
+        trim: true,
+      }, 
+      city: {
+        type: String,
+        trim: true,
+      },
+      state: {
+        type: String,
+        trim: true,
+      }, 
+      pincode: {
+        type: String,
+        trim: true,
+      },
+    },
     status: {
       type: String,
       default: "Pending",

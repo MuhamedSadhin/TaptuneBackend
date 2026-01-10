@@ -10,7 +10,7 @@ const reviewCardOrderSchema = new mongoose.Schema(
 
     cardId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Card", 
+      ref: "Card",
       required: true,
     },
 
@@ -27,15 +27,35 @@ const reviewCardOrderSchema = new mongoose.Schema(
     },
 
     logo: {
-      type: String, // stored file URL
+      type: String, 
       default: "",
     },
-
-    /* -------- STATUS -------- */
+    deliveryAddress: {
+      houseName: {
+        type: String,
+        trim: true,
+      },
+      landmark: {
+        type: String,
+        trim: true,
+      },
+      city: {
+        type: String,
+        trim: true,
+      },
+      state: {
+        type: String,
+        trim: true,
+      },
+      pincode: {
+        type: String,
+        trim: true,
+      },
+    },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],
-      default: "pending",
+      default: "pending", 
     },
   },
   {

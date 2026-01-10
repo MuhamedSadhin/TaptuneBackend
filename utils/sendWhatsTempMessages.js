@@ -72,7 +72,6 @@ export const sendWelcomeTemplate = async ({ to, firstName }) => {
           language: { code: "en_US" },
 
           components: [
-            // ✅ HEADER IMAGE (MANDATORY because template has image header)
             {
               type: "header",
               parameters: [

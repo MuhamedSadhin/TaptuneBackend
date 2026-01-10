@@ -1,58 +1,126 @@
+import mongoose from "mongoose";
+import paymentSchema from "../models/paymentSchema.js";
 import ReviewCardOrder from "../models/ReviewCardOrders.js";
 import User from "../models/userSchema.js";
 
 
 export const createReviewCardOrder = async (req, res) => {
-  try {
-    const userId = req.user?._id; // ✅ FROM TOKEN
-    const { cardId, brandName, googleReviewUrl, logo } = req.body;
+  const session = await mongoose.startSession();
 
+  try {
+    session.startTransaction();
+
+    /* ================= AUTH ================= */
+    const userId = req.user?._id;
     if (!userId) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
       });
     }
 
-    if (!cardId || !brandName || !googleReviewUrl) {
-      return res.status(400).json({
-        success: false,
-        message: "Required fields are missing",
-      });
-    }
-
-    const order = await ReviewCardOrder.create({
-      userId,
+    /* ================= INPUT ================= */
+    const {
       cardId,
       brandName,
       googleReviewUrl,
       logo,
-      status: "pending",
-    });
+      deliveryAddress,
+      amount,
+      razorpayOrderId,
+      paymentId,
+    } = req.body;
+
+    /* ================= VALIDATION ================= */
+    if (!cardId || !brandName || !googleReviewUrl) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "cardId, brandName and googleReviewUrl are required",
+      });
+    }
+
+    if (!amount || amount <= 0 || !razorpayOrderId) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "Valid amount and razorpayOrderId are required",
+      });
+    }
+
+    /* ================= CREATE REVIEW ORDER ================= */
+    const [reviewOrder] = await ReviewCardOrder.create(
+      [
+        {
+          userId,
+          cardId,
+          brandName: brandName.trim(),
+          googleReviewUrl: googleReviewUrl.trim(),
+          logo: logo || "",
+          deliveryAddress: {
+            houseName: deliveryAddress?.houseName,
+            landmark: deliveryAddress?.landmark,
+            city: deliveryAddress?.city,
+            state: deliveryAddress?.state,
+            pincode: deliveryAddress?.pincode,
+          },
+          status: "pending",
+        },
+      ],
+      { session }
+    );
+
+    /* ================= CREATE PAYMENT ================= */
+    const [payment] = await paymentSchema.create(
+      [
+        {
+          userId,
+          reviewCardId: reviewOrder._id,
+          isReviewCard: true,
+          amount,
+          razorpayOrderId,
+          paymentId: paymentId || null,
+          status: "paid",
+          attempt: 1,
+        },
+      ],
+      { session }
+    );
+
+    /* ================= COMMIT ================= */
+    await session.commitTransaction();
+    session.endSession();
 
     return res.status(201).json({
       success: true,
-      message: "Review card order created successfully",
-      data: order,
+      message: "Review card order and payment created .",
+      data: {
+        order: reviewOrder,
+        payment,
+      },
     });
   } catch (error) {
-    console.error("Create review card order error:", error);
+    await session.abortTransaction();
+    session.endSession();
+
+    console.error("Create review card order + payment error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to create review card order",
     });
   }
 };
-
-
-
-
 const ALLOWED_STATUSES = [
   "pending",
   "confirmed",
   "design_completed",
   "delivered",
-];
+];   
 
 export const updateReviewCardOrderStatus = async (req, res) => {
   try {
@@ -98,9 +166,6 @@ export const updateReviewCardOrderStatus = async (req, res) => {
     });
   }
 };
-
-
-
 
 export const getAllReviewCardOrders = async (req, res) => {
   try {

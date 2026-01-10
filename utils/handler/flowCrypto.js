@@ -114,12 +114,6 @@ export const decryptRequest = (body, privateKeyPem) => {
 
 
 
-
-
-
-/**
- * Encrypt response payload
- */
 export const encryptResponse = (payload, aesKey, iv) => {
   console.log("➡️ encryptResponse() CALLED");
   console.log("📤 Payload:", payload);

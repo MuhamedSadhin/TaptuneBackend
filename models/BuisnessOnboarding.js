@@ -25,8 +25,6 @@ const onboardingSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-
-    // Step 2
     mainGoals: {
       type: [String],
       default: [],
@@ -39,8 +37,6 @@ const onboardingSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
-
-    // Step 3
     industryCategory: {
       type: String,
       trim: true,

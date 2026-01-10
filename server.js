@@ -18,6 +18,8 @@ import connectDB from "./config/db.js";
 import SalesRoute from "./routes/salesRoute.js"
 import reviewCard from "./routes/reviewCardRoutes.js"
 import whatsappApi from "./routes/whatsappApiRoute.js"
+import paymentRoutes from "./routes/paymentRoute.js";
+import { handleRazorpayWebhook } from "./controllers/paymentController.js";
 // import convertLogicRoutes from "./DBLogic/convertLogic.js";
 
 const app = express();
@@ -28,6 +30,12 @@ const corsOptions = {
   origin: true, 
   credentials: true, 
 };
+
+app.post(
+  "/api/payment/webhook",
+  express.raw({ type: "application/json" }),
+  handleRazorpayWebhook
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -57,8 +65,7 @@ app.use(
 
 
 
-app.use(morgan("dev"));
-// app.use("/api/convertlogic",convertLogicRoutes)
+app.use(morgan("dev"));// app.use("/api/convertlogic",convertLogicRoutes)
 app.use("/api/auth", authRoutes);
 app.use("/api/card", cardRoutes);
 app.use("/api/profile", profileRoutes);
@@ -72,6 +79,7 @@ app.use("/api/onboarding", OnboardingRoute);
 app.use("/api/sales", SalesRoute)
 app.use("/api/reviewCard", reviewCard);
 app.use("/api/whatsappApi", whatsappApi);
+app.use("/api/payment", paymentRoutes);
 app.use("/", (req, res) => {
   res.send("API not matching!");
 })

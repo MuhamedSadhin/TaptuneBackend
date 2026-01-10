@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import CardOrder from "../models/cardOrders.js";
 import Profile from "../models/profileSchema.js";
 import User from "../models/userSchema.js";
+import Connect from "../models/connectSchema.js";
 
 export const viewAllProfileOfAUser = async (req, res) => {
     try {
@@ -404,6 +405,7 @@ export async function transferProfileToUser(req, res) {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
+    console.error("Error transferring profile:", error);
 
     return res.status(500).json({
       success: false,

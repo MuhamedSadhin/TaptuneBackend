@@ -5,18 +5,20 @@ import { v4 as uuidv4 } from "uuid";
 import User from "../models/userSchema.js";
 import { sendWhatsAppTemplateMessage } from "../utils/sendWabtuneMessage.js";
 import notificationSchema from "../models/notificationSchema.js";
+import paymentSchema from "../models/paymentSchema.js";
 
 export const viewAllCards = async (req, res) => {
   try {
-    const isAdmin = req.user?.role == "Admin" || false;
-    console.log(req.user);
+    // const isAdmin = req.user?.role == "Admin" || false;
+    // console.log(req.user);
 
-    let query = {};
-    if (!isAdmin) {
-      query.isActive = true; 
-    }
+    // let query = {};
+    // if (!isAdmin) {
+    //   query.isActive = true; 
+    // }
 
-    const cards = await Card.find(query).sort({ isActive: -1 });
+    // const cards = await Card.find(query).sort({ isActive: -1 });
+    const cards = await Card.find().sort({ isActive: -1 });
 
     res.status(200).json({
       success: true,
@@ -64,38 +66,59 @@ export const viewOneCard = async(req, res) => {
 }
 
 
+
 export const orderCardAndCreateProfile = async (req, res) => {
   try {
-    const { cardId, fullName, designation, phone, email, quantity, logoImage } =
-      req.body;
-    const userId = req.user.id;
+    const {
+      cardId,
+      fullName,
+      designation,
+      phone,
+      email,
+      quantity,
+      logoImage,
+      deliveryAddress, // Optional
+      razorpayOrderId,
+      paymentId,
+      amount,
+    } = req.body;
 
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    // 1. Basic Validation
     if (
       !userId ||
       !cardId ||
       !fullName ||
-      !quantity ||
       !designation ||
       !phone ||
-      !email
+      !email ||
+      !quantity ||
+      !amount
     ) {
-      return res
-        .status(400)
-        .json({ message: "Missing required fields.", success: false });
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields.",
+      });
     }
 
-    // 1️⃣ Find and update user in one go
+    // 2. Update User Status
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: { isOrdered: true } },
       { new: true }
     );
-    if (!user)
-      return res
-        .status(404)
-        .json({ message: "User not found", success: false });
 
-    // 2️⃣ Create order & profile
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // 3. Create Card Order
+    // Handle optional address gracefully
     const cardOrder = await CardOrder.create({
       userId,
       cardId,
@@ -105,9 +128,19 @@ export const orderCardAndCreateProfile = async (req, res) => {
       email,
       quantity,
       logoImage,
+      totalAmount: amount,
+      deliveryAddress: {
+        houseNo: deliveryAddress?.houseNo || "",
+        landmark: deliveryAddress?.landmark || "",
+        city: deliveryAddress?.city || "",
+        state: deliveryAddress?.state || "",
+        pincode: deliveryAddress?.pincode || "",
+        country: "India",
+      },
       status: "Pending",
     });
 
+    // 4. Create Profile
     const uniqueViewId = `USR-${cardOrder._id
       .toString()
       .slice(-4)}-${Date.now()}`;
@@ -120,47 +153,74 @@ export const orderCardAndCreateProfile = async (req, res) => {
       email,
       phoneNumber: phone,
       designation,
-      isActive: false,
+      isActive: false, // Inactive until processed
     });
 
-    // 3️⃣ Link profile to order (one update)
+    // Link profile to order
     await CardOrder.findByIdAndUpdate(cardOrder._id, {
       profileId: profile._id,
     });
-        await notificationSchema.create({
-          title: "New Profile Created! 👤",
-          name: fullName,
-          email: email,
-          content: `${fullName} -(${email}) has created a new profile.`,
-          type: "profile", // optional extra field for filtering later
-          relatedId: profile._id, // optional: link notification to the profile
-        });
 
-    // 4️⃣ Send WhatsApp message async (non-blocking)
-    if (phone) {
-      sendWhatsAppTemplateMessage(
-        "226076",
-        "https://bot-data.s3.ap-southeast-1.wasabisys.com/upload/2025/8/flowbuilder/flowbuilder-108017-1756203446.png",
-        phone,
-        fullName,
-        "169013"
-      ).catch((err) => console.error("WhatsApp send failed:", err));
+    // 5. Record Payment (If User)
+    if (role === "user") {
+      if (!razorpayOrderId || !paymentId || !amount) {
+        return res.status(400).json({
+          success: false,
+          message: "Payment details missing",
+        });
+      }
+
+      await paymentSchema.create({
+        userId,
+        cardOrderId: cardOrder._id,
+        razorpayOrderId,
+        razorpayPaymentId: paymentId,
+        amount,
+        status: "paid",
+        isReviewCard: false,
+        customerPhone: phone,
+      });
     }
 
-    // ✅ Respond fast without waiting for WhatsApp API
+    // 6. Create Notification
+    await Notification.create({
+      title: "New Order Received",
+      name: fullName,
+      email,
+      content: `${fullName} has placed a new order for ₹${amount}.`,
+      type: "order",
+      relatedId: cardOrder._id,
+    });
+
+    if (phone) {
+      sendWhatsAppTemplateMessage(
+        "226076", // Template Name/ID
+        "https://bot-data.s3.ap-southeast-1.wasabisys.com/upload/2025/8/flowbuilder/flowbuilder-108017-1756203446.png", // Header Image
+        phone,
+        fullName,
+        "169013" // Dynamic Parameter
+      )
+        .then((response) => console.log("WhatsApp sent:", response))
+        .catch((err) => console.error("WhatsApp Failed:", err.message));
+    }
+
     return res.status(201).json({
-      message: "Card order placed and profile created successfully.",
+      success: true,
+      message: "Card order placed successfully.",
       order: cardOrder,
       profile,
-      success: true,
     });
   } catch (error) {
-    console.error("Order error:", error);
-    return res
-      .status(500)
-      .json({ message: "Internal server error.", success: false });
+    console.error("Order API Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
   }
 };
+
+
+
 
 
 export const updateCard = async (req, res) => {
